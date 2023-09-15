@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  api:
+    image: dc_api
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: dc_api
+    restart: on-failure
+    environment:
+      - CONFIG_FILE=./configs/config.test.yaml
+    expose:
+      - 8080
+      - 80
+    ports:
+      - "8080:8080"
+      - "80:80"
+    volumes:
+      - ./configs:/configs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: [ "/app", "run" ]
+
+  mysql:
+    image: mysql
+    container_name: dc_mysql
+    restart: on-failure
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_pwd
+      - MYSQL_DATABASE=demo
+    expose:
+      - 3306
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "-uroot", "-p$$MYSQL_ROOT_PASSWORD",  "ping", "-h", "localhost"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ./runtime/data-mysql:/var/lib/mysql
+
+  redis:
+    image: redis
+    container_name: dc_redis
+    restart: on-failure
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ./runtime/data-redis:/data
+    command: redis-server
