@@ -4,9 +4,9 @@ package app
 import (
 	"context"
 	"demo/internal/app/router"
+	"demo/internal/pkg/db"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -56,8 +56,8 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 }
 
 // NewAPIServer 创建API服务实例
-func NewAPIServer(db *sqlx.DB, rdb *redis.Client, lg *logrus.Logger) *APIServer {
+func NewAPIServer(db *db.Connector, rdb *redis.Client, lg *logrus.Logger) *APIServer {
 	s := &APIServer{Logger: lg}
-	s.mux = router.Init(db, rdb)
+	s.mux = router.Init(db, rdb, lg)
 	return s
 }

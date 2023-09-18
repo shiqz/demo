@@ -1,10 +1,7 @@
 package types
 
 import (
-	"demo/internal/app/errs"
 	"github.com/pkg/errors"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -53,24 +50,3 @@ const (
 var (
 	ErrInvalidSession = errors.New("invalid session")
 )
-
-// ParseToken 解析Token
-func ParseToken(token string) (SessionScene, uint, error) {
-	tokenInfo := strings.Split(token, SessionSplitFlag)
-	tl := len(tokenInfo)
-	if tl < 2 {
-		return "", 0, errs.ErrInvalidToken
-	}
-
-	// parse uid from token
-	id, err := strconv.ParseUint(tokenInfo[tl-2], 10, 64)
-	if err != nil {
-		return "", 0, errs.ErrInvalidToken
-	}
-	uid := uint(id)
-	scene := UserSession
-	if strings.HasPrefix(token, AdminTokenPrefix) {
-		scene = AdminSession
-	}
-	return scene, uid, nil
-}

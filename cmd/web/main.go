@@ -30,7 +30,7 @@ func main() {
 func run(ctx context.Context, cfg config.AppConfig) error {
 	lg := logger.New(cfg.Server.LogLevel)
 	// 初始化 database connection
-	dc, err := db.NewMySQL(cfg.MySQL)
+	dc, err := db.NewMySQL(cfg.MySQL, lg)
 	if err != nil {
 		return err
 	}

@@ -2,8 +2,8 @@
 package config
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -53,9 +53,14 @@ type Redis struct {
 	Database int    `yaml:"database"`
 }
 
-// DSN 获取MySQL数据库连接
-func (c MySQL) DSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s", c.User, c.Password, c.Host, c.Database)
+// Builder 构建MySQL配置
+func (c MySQL) Builder() *mysql.Config {
+	return &mysql.Config{
+		User:   c.User,
+		Passwd: c.Password,
+		Addr:   c.Host,
+		DBName: c.Database,
+	}
 }
 
 // Init 初始化配置

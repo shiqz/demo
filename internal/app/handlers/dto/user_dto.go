@@ -26,4 +26,12 @@ type (
 	ResUserLoginDTO struct {
 		Token string `json:"authorizeToken"`
 	}
+
+	// ResUserinfoDTO 响应用户信息
+	ResUserinfoDTO struct {
+		UserID   uint   `json:"userId"`
+		Username string `json:"username"`
+		Gender   uint8  `json:"gender"`
+		Nickname string `json:"nickname"`
+	}
 )

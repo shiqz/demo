@@ -1,5 +1,5 @@
 // Package services 服务实现
-package services
+package service
 
 import (
 	"context"
@@ -34,7 +34,7 @@ func (s *UserService) Create(ctx context.Context, ug *domain.UserAggregate) erro
 }
 
 // Login 用户登录
-func (s *UserService) Login(ctx context.Context, username, pass string) (*domain.UserAggregate, error) {
+func (s *UserService) Login(ctx context.Context, username, pass string) (*entity.Session, error) {
 	ug, err := s.repo.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -45,9 +45,23 @@ func (s *UserService) Login(ctx context.Context, username, pass string) (*domain
 	if !ug.User.IsValidPassword(pass) {
 		return nil, errs.EcInvalidUser
 	}
-	ug.Session = entity.NewSession(types.UserSession, ug.User.UserID)
-	if err = s.repo.SetSession(ctx, ug); err != nil {
-		return nil, err
-	}
-	return ug, nil
+	return entity.NewSession(types.UserSession, ug.User.UserID), nil
+}
+
+// GetUserinfo 获取用户信息
+func (s *UserService) GetUserinfo(ctx context.Context) (*domain.UserAggregate, error) {
+	session := ctx.Value(types.SessionFlag).(*entity.Session)
+	return s.repo.GetOne(ctx, session.GetSessionID())
+}
+
+// UpdatePassword 更新用户密码
+func (s *UserService) UpdatePassword(ctx context.Context, pass string) error {
+	session := ctx.Value(types.SessionFlag).(*entity.Session)
+	return s.repo.UpdatePass(ctx, session.GetSessionID(), pass)
+}
+
+// Users 用户列表
+func (s *UserService) Users(ctx context.Context) ([]*domain.UserAggregate, error) {
+
+	return nil, nil
 }

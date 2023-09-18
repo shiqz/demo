@@ -1,11 +1,13 @@
 package entity
 
 import (
+	"demo/internal/app/errs"
 	"demo/internal/domain/types"
 	"demo/internal/pkg/utils"
 	"encoding/json"
 	"github.com/pkg/errors"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -68,7 +70,44 @@ func (s *Session) FormatToken() string {
 
 // IsExpired 已过期
 func (s *Session) IsExpired() bool {
-	return s.RefreshTime-time.Now().Unix() <= 0
+	return s.state() == types.SessionStateExpired
+}
+
+// IsExpireSoon Session 是否快过期
+func (s *Session) IsExpireSoon() bool {
+	return s.state() == types.SessionStateExpiringSoon
+}
+
+// IsNormal Session 是否正常过期
+func (s *Session) IsNormal() bool {
+	return s.state() == types.SessionStateNormal
+}
+
+// Reset 重置
+func (s *Session) Reset() {
+	s.Token = utils.GetRandomStr(20)
+	s.RefreshTime = time.Now().Add(types.SessionExpireTime).Unix()
+}
+
+// GetSessionID 获取会话ID
+func (s *Session) GetSessionID() uint {
+	return s.uid
+}
+
+// GetScene 获取会话类型
+func (s *Session) GetScene() types.SessionScene {
+	return s.scene
+}
+
+// State 获取Session状态
+func (s *Session) state() types.SessionState {
+	sub := s.RefreshTime - time.Now().Unix()
+	if sub <= 0 {
+		return types.SessionStateExpired
+	} else if sub > 0 && sub < int64(types.SessionExpiringSoonTime.Seconds()) {
+		return types.SessionStateExpiringSoon
+	}
+	return types.SessionStateNormal
 }
 
 // NewSession 创建Session
@@ -77,4 +116,27 @@ func NewSession(scene types.SessionScene, uid uint) *Session {
 	s.RefreshTime = time.Now().Add(types.SessionExpireTime).Unix()
 	s.Token = utils.GetRandomStr(20)
 	return s
+}
+
+// LoadSessionByToken 根据 Token 加载会话
+func LoadSessionByToken(token string) (*Session, error) {
+	tokenInfo := strings.Split(token, types.SessionSplitFlag)
+	tl := len(tokenInfo)
+	if tl < 2 {
+		return nil, errs.ErrInvalidToken
+	}
+	// parse uid from token
+	id, err := strconv.ParseUint(tokenInfo[tl-2], 10, 64)
+	if err != nil {
+		return nil, errs.ErrInvalidToken
+	}
+	s := &Session{
+		scene: types.UserSession,
+		uid:   uint(id),
+		Token: tokenInfo[tl-1],
+	}
+	if strings.HasPrefix(token, types.AdminTokenPrefix) {
+		s.scene = types.AdminSession
+	}
+	return s, nil
 }

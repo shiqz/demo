@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -14,45 +15,47 @@ const (
 	DefaultEmptyData = "{}"
 	// DefaultStatus 默认状态码
 	DefaultStatus = http.StatusOK
-	// DefaultMessage 默认返回消息
-	DefaultMessage = "success"
+	// HTTPHeaderStatusFlag 内置响应状态标识
+	HTTPHeaderStatusFlag = "_INTERNAL_RESPONSE_DATA_FLAG"
+	HTTPHeaderDataFlag   = "_INTERNAL_RESPONSE_STATUS_FLAG"
 )
 
-// Response HTTP响应体
-type Response struct {
+// response HTTP响应体
+type response struct {
 	w       http.ResponseWriter
 	Status  int    `json:"status"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`
 }
 
-// NewResponse 实例化响应
-func NewResponse(w http.ResponseWriter, code int, msg string, data any) *Response {
-	return &Response{w: w, Data: data, Status: code, Message: msg}
+// response 实例化响应
+func respond(w http.ResponseWriter, code int, msg string, data any) *response {
+	return &response{w: w, Data: data, Status: code, Message: msg}
 }
 
-func (res Response) send(status int) {
+func (res response) json(status int) {
 	if res.Data == nil {
 		res.Data = DefaultEmptyData
 	}
 	res.w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	res.w.WriteHeader(status)
-	err := errors.Wrap(json.NewEncoder(res.w).Encode(res), "response encode")
+	marshal, err := json.Marshal(res)
 	if err != nil {
-		log.Errorf("%+v", err)
+		log.Errorf("%+v", errors.Wrap(err, "response encode"))
 	}
+	res.w.Header().Set(HTTPHeaderDataFlag, string(marshal))
+	res.w.Header().Set(HTTPHeaderStatusFlag, strconv.FormatInt(int64(status), 10))
 }
 
 // Success 响应成功
 func Success(w http.ResponseWriter, httpStatus int, message string, data any) {
-	NewResponse(w, http.StatusOK, message, data).send(httpStatus)
+	respond(w, DefaultStatus, message, data).json(httpStatus)
 }
 
 // Error 响应错误
 func Error(w http.ResponseWriter, err error) {
 	var er errs.Error
 	if errors.As(err, &er) {
-		NewResponse(w, er.Code(), er.Error(), nil).send(er.HTTPStatus())
+		respond(w, er.Code(), er.Error(), nil).json(er.HTTPStatus())
 		return
 	}
 
@@ -61,5 +64,5 @@ func Error(w http.ResponseWriter, err error) {
 		e = errs.EcInternalServerErr
 		log.Errorf("%+v", err)
 	}
-	NewResponse(w, e.Code(), e.Error(), nil).send(e.HTTPStatus())
+	respond(w, e.Code(), e.Error(), nil).json(e.HTTPStatus())
 }

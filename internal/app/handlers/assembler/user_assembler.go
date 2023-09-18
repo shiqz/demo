@@ -2,7 +2,7 @@
 package assembler
 
 import (
-	"demo/internal/app/controller/dto"
+	"demo/internal/app/handlers/dto"
 	"demo/internal/domain"
 	"demo/internal/domain/entity"
 	"time"

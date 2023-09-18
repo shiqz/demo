@@ -4,7 +4,10 @@ package errs
 import "github.com/pkg/errors"
 
 var (
+	// ErrInvalidToken token 错误
 	ErrInvalidToken = errors.New("invalid token")
+	// ErrAPINotFound 访问不存在接口错误
+	ErrAPINotFound = errors.New("API not found")
 )
 
 // Error 应用错误
@@ -15,8 +18,13 @@ type Error struct {
 
 // 获取错误消息
 func (e Error) Error() string {
-	if e.ec == EcInvalidRequest && e.err != nil {
-		return e.err.Error()
+	if e.err != nil {
+		switch e.ec {
+		case EcInvalidRequest:
+			return e.err.Error()
+		case EcNotFound:
+			return e.err.Error()
+		}
 	}
 	return e.ec.Error()
 }

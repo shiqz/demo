@@ -34,7 +34,7 @@ var (
 		EcNotFound:                "Not found",
 		EcInvalidUser:             "账号或密码错误",
 		EcUserHasBeenExist:        "该账号已被注册",
-		EcUnauthorized:            "Unauthorized",
+		EcUnauthorized:            "未授权登录或登录会话已过期",
 		EcStatusForbidden:         "您的账号已被禁用，如有疑问请联系管理人员",
 		EcStatusForbiddenForPerms: "你没有该操作权限",
 	}
