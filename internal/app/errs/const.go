@@ -29,12 +29,12 @@ const (
 var (
 	// EcMessages 内部错误码对应错误消息
 	EcMessages = map[ErrStatus]string{
-		EcInvalidRequest:          "invalid request",
+		EcInvalidRequest:          "Invalid request",
 		EcInternalServerErr:       "Internal serve error",
-		EcNotFound:                "Not found",
+		EcNotFound:                "404 not found",
 		EcInvalidUser:             "账号或密码错误",
 		EcUserHasBeenExist:        "该账号已被注册",
-		EcUnauthorized:            "未授权登录或登录会话已过期",
+		EcUnauthorized:            "Unauthorized!",
 		EcStatusForbidden:         "您的账号已被禁用，如有疑问请联系管理人员",
 		EcStatusForbiddenForPerms: "你没有该操作权限",
 	}

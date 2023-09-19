@@ -22,15 +22,20 @@ const (
 
 // AppConfig API服务配置结构
 type AppConfig struct {
+	file   string
 	Server Server
 	MySQL  MySQL
 	Redis  Redis
 }
 
+// GetConfigFile 获取配置文件
+func (c *AppConfig) GetConfigFile() string {
+	return c.file
+}
+
 // Server Server配置
 type Server struct {
 	Addr     string `yaml:"addr"`
-	Version  string `yaml:"version"`
 	LogLevel string `yaml:"logLevel"`
 }
 
@@ -40,6 +45,7 @@ type MySQL struct {
 	User            string `yaml:"user"`
 	Password        string `yaml:"password"`
 	Database        string `yaml:"database"`
+	Debug           bool
 	MaxIdleConn     int
 	MaxOpenConn     int
 	ConnMaxIdleTime time.Duration
@@ -56,10 +62,11 @@ type Redis struct {
 // Builder 构建MySQL配置
 func (c MySQL) Builder() *mysql.Config {
 	return &mysql.Config{
-		User:   c.User,
-		Passwd: c.Password,
-		Addr:   c.Host,
-		DBName: c.Database,
+		User:    c.User,
+		Passwd:  c.Password,
+		Addr:    c.Host,
+		DBName:  c.Database,
+		Timeout: time.Second,
 	}
 }
 
@@ -82,8 +89,9 @@ func Init() (*AppConfig, error) {
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		if err := viper.Unmarshal(&cfg); err != nil {
-			log.Printf("刷新配置文件异常：%+v", errors.WithStack(err))
+			log.Errorf("刷新配置文件异常：%+v", errors.WithStack(err))
 		}
 	})
+	cfg.file = cfgFile
 	return &cfg, nil
 }

@@ -4,17 +4,17 @@ package redis_repos_impl
 import (
 	"context"
 	"demo/internal/domain"
-	"github.com/redis/go-redis/v9"
+	"demo/internal/pkg/db"
 	"time"
 )
 
 // SessionRepository 会话仓库
 type SessionRepository struct {
-	redis *redis.Client
+	redis *db.Redis
 }
 
 // NewSessionRepository 创建会话仓库
-func NewSessionRepository(redis *redis.Client) domain.SessionRepository {
+func NewSessionRepository(redis *db.Redis) domain.SessionRepository {
 	return &SessionRepository{redis: redis}
 }
 

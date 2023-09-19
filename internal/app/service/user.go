@@ -22,34 +22,34 @@ func NewUserService(repo domain.UserRepository) domain.UserService {
 }
 
 // Create 创建用户
-func (s *UserService) Create(ctx context.Context, ug *domain.UserAggregate) error {
-	existUg, err := s.repo.GetUserByUsername(ctx, ug.User.Username)
+func (s *UserService) Create(ctx context.Context, user *entity.User) error {
+	existUg, err := s.repo.GetUserByUsername(ctx, user.Username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
 	if existUg != nil {
 		return errs.EcUserHasBeenExist
 	}
-	return s.repo.Save(ctx, ug)
+	return s.repo.Save(ctx, user)
 }
 
 // Login 用户登录
 func (s *UserService) Login(ctx context.Context, username, pass string) (*entity.Session, error) {
-	ug, err := s.repo.GetUserByUsername(ctx, username)
+	user, err := s.repo.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.EcInvalidUser
 		}
 		return nil, err
 	}
-	if !ug.User.IsValidPassword(pass) {
+	if !user.IsValidPassword(pass) {
 		return nil, errs.EcInvalidUser
 	}
-	return entity.NewSession(types.UserSession, ug.User.UserID), nil
+	return entity.NewSession(types.UserSession, user.UserID), nil
 }
 
 // GetUserinfo 获取用户信息
-func (s *UserService) GetUserinfo(ctx context.Context) (*domain.UserAggregate, error) {
+func (s *UserService) GetUserinfo(ctx context.Context) (*entity.User, error) {
 	session := ctx.Value(types.SessionFlag).(*entity.Session)
 	return s.repo.GetOne(ctx, session.GetSessionID())
 }
@@ -61,7 +61,7 @@ func (s *UserService) UpdatePassword(ctx context.Context, pass string) error {
 }
 
 // Users 用户列表
-func (s *UserService) Users(ctx context.Context) ([]*domain.UserAggregate, error) {
+func (s *UserService) Users(ctx context.Context, filter *domain.UserFilter) ([]*entity.User, error) {
 
 	return nil, nil
 }

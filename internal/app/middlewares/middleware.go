@@ -7,6 +7,7 @@ import (
 	"demo/internal/domain"
 	"demo/internal/domain/entity"
 	"demo/internal/domain/types"
+	"demo/internal/pkg/logger"
 	"demo/internal/pkg/utils"
 	"fmt"
 	"github.com/go-chi/chi/v5/middleware"
@@ -54,7 +55,7 @@ func HandleCors(next http.Handler) http.Handler {
 }
 
 // HandleLogger 日志中间件
-func HandleLogger(lg *log.Logger) func(next http.Handler) http.Handler {
+func HandleLogger(lg *logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return middleware.RequestLogger(&middleware.DefaultLogFormatter{
 			Logger:  lg,

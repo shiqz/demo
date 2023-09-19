@@ -4,19 +4,23 @@ package app
 import (
 	"context"
 	"demo/internal/app/router"
+	"demo/internal/infrastructure/config"
 	"demo/internal/pkg/db"
+	"demo/internal/pkg/logger"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
+const Version = "v0.2.6"
+
 // APIServer API服务
 type APIServer struct {
-	Logger *logrus.Logger
+	Logger *logger.Logger
 	mux    chi.Router
 }
 
@@ -33,7 +37,7 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 
 	go func(ec chan<- error) {
 		if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
-			ec <- fmt.Errorf("[Server]shutdonwn: %w", err)
+			ec <- errors.WithStack(fmt.Errorf("[Server]shutdonwn: %w", err))
 		}
 	}(ec)
 
@@ -43,7 +47,7 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 		shutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 		if err := srv.Shutdown(shutCtx); err != nil {
-			return fmt.Errorf("[Server]shutdonwn: %w", err)
+			return errors.WithStack(fmt.Errorf("[Server]shutdonwn: %w", err))
 		}
 		return nil
 	}
@@ -55,9 +59,28 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 	}
 }
 
-// NewAPIServer 创建API服务实例
-func NewAPIServer(db *db.Connector, rdb *redis.Client, lg *logrus.Logger) *APIServer {
-	s := &APIServer{Logger: lg}
-	s.mux = router.Init(db, rdb, lg)
-	return s
+// RunAPIServer 运行API服务
+func RunAPIServer(cfg config.AppConfig) {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	srv := &APIServer{Logger: logger.New(cfg.Server.LogLevel)}
+	srv.Logger.Tracef("[config]%s", cfg.GetConfigFile())
+
+	// init database connection
+	dc, err := db.NewMySQL(cfg.MySQL, srv.Logger)
+	if err != nil {
+		srv.Logger.Fatalf("[Server]failed run: %+v", err)
+	}
+
+	// init redis connection
+	rdb, err := db.NewRedis(cfg.Redis)
+	if err != nil {
+		srv.Logger.Fatalf("[Server]failed run: %+v", err)
+	}
+
+	srv.mux = router.Init(dc, rdb, srv.Logger)
+	if err = srv.Start(ctx, cfg.Server.Addr); err != nil {
+		srv.Logger.Fatalf("%+v", err)
+	}
 }

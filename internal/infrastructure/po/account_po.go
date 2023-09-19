@@ -3,34 +3,44 @@ package po
 
 import (
 	"demo/internal/domain"
+	"demo/internal/domain/entity"
+	"demo/internal/domain/types"
+	"time"
 )
 
 // Account 用户表映射
 type Account struct {
-	UserID     uint   `db:"user_id"`
-	Username   string `db:"username"`
+	AdminID    uint   `db:"admin_id"`
+	Email      string `db:"email"`
 	Passwd     string `db:"passwd"`
-	Salt       string `db:"salt"`
-	Nickname   string `db:"nickname"`
-	Gender     uint   `db:"gender"`
-	Status     uint   `db:"status"`
+	Roles      string `db:"roles"`
 	CreateTime int64  `db:"create_time"`
 }
 
-func (*Account) TableName() string {
-	return "admins"
-}
-
 // AccountConvertor 用户数据转换
-type AccountConvertor struct {
-}
+type AccountConvertor struct{}
 
 // CreateEntity op 转为 aggregate
-func (uc *AccountConvertor) CreateEntity(u Account) *domain.AccountAggregate {
-	return &domain.AccountAggregate{}
+func (uc *AccountConvertor) CreateEntity(data Account) *domain.AccountAggregate {
+	item := &entity.Account{
+		AdminID:    data.AdminID,
+		Email:      data.Email,
+		Password:   data.Passwd,
+		CreateTime: time.Unix(data.CreateTime, 0),
+	}
+	item.Roles, _ = types.ParseRoles(data.Roles, true)
+	return &domain.AccountAggregate{
+		Account: item,
+	}
 }
 
 // CreatePO aggregate -> PO
-func (uc *AccountConvertor) CreatePO(ug *domain.AccountAggregate) *Account {
-	return &Account{}
+func (uc *AccountConvertor) CreatePO(vo *domain.AccountAggregate) *Account {
+	item := &Account{
+		Email:      vo.Account.Email,
+		CreateTime: vo.Account.CreateTime.Unix(),
+		Roles:      vo.Account.Roles.String(),
+		Passwd:     vo.Account.Password,
+	}
+	return item
 }

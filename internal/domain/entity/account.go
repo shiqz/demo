@@ -2,7 +2,10 @@ package entity
 
 import (
 	"demo/internal/app/errs"
+	"demo/internal/domain/types"
 	"demo/internal/pkg/utils"
+	"github.com/pkg/errors"
+	"time"
 )
 
 // Account 管理员账号实体
@@ -10,15 +13,15 @@ type Account struct {
 	AdminID    uint
 	Email      string
 	Password   string
-	Roles      string
-	CreateTime int64
+	Roles      types.Roles
+	CreateTime time.Time
 }
 
 // SetPassword 设置密码
 func (u *Account) SetPassword(pass string) error {
 	enPass, err := utils.HashPassEncrypt([]byte(pass))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	u.Password = string(enPass)
 	return nil

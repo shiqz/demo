@@ -31,7 +31,7 @@ func (HealthHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 		err := next(ctx, cmd)
 		// 记录耗时命令
 		if cut := time.Since(start); cut >= SlowKey {
-			log.Warnf("[RedisHandle] command: %s, cuttime: %s", cmd.String(), cut.String())
+			log.Warnf("[RedisHealth] command: %s, cuttime: %s", cmd.String(), cut.String())
 		}
 		return err
 	}

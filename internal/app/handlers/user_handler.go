@@ -61,16 +61,16 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 // HandleIdentity 获取用户信息
 func (h *UserHandler) HandleIdentity(w http.ResponseWriter, r *http.Request) {
-	ug, err := h.userService.GetUserinfo(r.Context())
+	u, err := h.userService.GetUserinfo(r.Context())
 	if err != nil {
 		response.Error(w, err)
 		return
 	}
 	response.Success(w, http.StatusOK, "success", dto.ResUserinfoDTO{
-		UserID:   ug.User.UserID,
-		Username: ug.User.Username,
-		Gender:   uint8(ug.User.Gender),
-		Nickname: ug.User.Nickname,
+		UserID:   u.UserID,
+		Username: u.Username,
+		Gender:   uint8(u.Gender),
+		Nickname: u.Nickname,
 	})
 }
 
@@ -95,4 +95,19 @@ func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success(w, http.StatusOK, "success", nil)
+}
+
+// HandleUsers 查询用户列表
+func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
+	data := new(dto.QueryUsersDTO)
+	if err := utils.ParseRequestData(r.Body, data); err != nil {
+		response.Error(w, errs.New(errs.EcInvalidRequest, err))
+		return
+	}
+	users, err := h.userService.Users(r.Context(), new(assembler.User).ToFilterFromQueryDTO(data))
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, "success", new(assembler.User).ToFilterResult(users))
 }

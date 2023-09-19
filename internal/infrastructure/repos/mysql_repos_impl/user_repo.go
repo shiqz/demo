@@ -7,6 +7,7 @@ import (
 	"demo/internal/domain/entity"
 	"demo/internal/infrastructure/po"
 	"demo/internal/pkg/db"
+	"demo/internal/pkg/logger"
 	"encoding/json"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/pkg/errors"
@@ -17,12 +18,13 @@ import (
 // UserRepository 用户仓库
 type UserRepository struct {
 	db    *db.Connector
-	redis *redis.Client
+	redis *db.Redis
+	lg    *logger.Logger
 }
 
 // NewUserRepository 实例化User repo
-func NewUserRepository(dc *db.Connector, redis *redis.Client) domain.UserRepository {
-	return &UserRepository{db: dc, redis: redis}
+func NewUserRepository(dc *db.Connector, redis *db.Redis, lg *logger.Logger) domain.UserRepository {
+	return &UserRepository{db: dc, redis: redis, lg: lg}
 }
 
 // key format key
@@ -31,68 +33,70 @@ func (r *UserRepository) key(id uint) string {
 }
 
 // 根据ID缓存用户
-func (r *UserRepository) reload(ctx context.Context, id uint) (*domain.UserAggregate, error) {
-	sql, _, err := r.db.PerSQL(r.db.Query(new(po.User).TableName()).Where(goqu.Ex{"user_id": id}).ToSQL())
+func (r *UserRepository) reload(ctx context.Context, id uint) (*entity.User, error) {
+	sql, args, err := dialect.From(po.UserTable).Prepared(true).Where(goqu.Ex{"user_id": id}).ToSQL()
 	if err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
+	r.db.Tracef(sql, args...)
 	var data po.User
-	if err = r.db.Driver.GetContext(ctx, &data, sql); err != nil {
+	if err = r.db.GetContext(ctx, &data, sql, args...); err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
-	ug := new(po.UserConvertor).CreateUserEntity(data)
-	marshal, err := json.Marshal(ug.User)
+	u := new(po.UserConvertor).CreateUserEntity(data)
+	marshal, err := json.Marshal(u)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	if err = r.redis.Set(ctx, r.key(id), string(marshal), -1).Err(); err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return ug, nil
+	return u, nil
 }
 
 // GetUserByUsername 根据用户名获取用户
-func (r *UserRepository) GetUserByUsername(ctx context.Context, uname string) (*domain.UserAggregate, error) {
-	sql, _, err := r.db.PerSQL(r.db.Query(new(po.User).TableName()).Where(goqu.Ex{"username": uname}).ToSQL())
+func (r *UserRepository) GetUserByUsername(ctx context.Context, uname string) (*entity.User, error) {
+	sql, args, err := dialect.From(po.UserTable).Prepared(true).Where(goqu.Ex{"username": uname}).ToSQL()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	r.db.Tracef(sql, args...)
 	var data po.User
-	if err = r.db.Driver.GetContext(ctx, &data, sql); err != nil {
+	if err = r.db.GetContext(ctx, &data, sql, args...); err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
 	return new(po.UserConvertor).CreateUserEntity(data), nil
 }
 
 // GetOne 根据ID获取用户
-func (r *UserRepository) GetOne(ctx context.Context, id uint) (*domain.UserAggregate, error) {
+func (r *UserRepository) GetOne(ctx context.Context, id uint) (*entity.User, error) {
 	cacheInfo, err := r.redis.Get(ctx, r.key(id)).Result()
 	empty := errors.Is(err, redis.Nil)
 	if err != nil && !empty {
 		return nil, err
 	}
-	ug := new(domain.UserAggregate)
+	u := new(entity.User)
 	if empty || cacheInfo == "" {
-		if ug, err = r.reload(ctx, id); err != nil {
+		if u, err = r.reload(ctx, id); err != nil {
 			return nil, err
 		}
 	}
-	ug.User = new(entity.User)
-	if err = json.Unmarshal([]byte(cacheInfo), ug.User); err != nil {
+	u = new(entity.User)
+	if err = json.Unmarshal([]byte(cacheInfo), u); err != nil {
 		return nil, err
 	}
-	return ug, nil
+	return u, nil
 }
 
 // Save 保存用户
-func (r *UserRepository) Save(ctx context.Context, ug *domain.UserAggregate) error {
-	data := new(po.UserConvertor).CreateUserPO(ug)
-	sql, _, err := r.db.PerSQL(r.db.Insert("users").Rows(data).ToSQL())
+func (r *UserRepository) Save(ctx context.Context, user *entity.User) error {
+	data := new(po.UserConvertor).CreateUserPO(user)
+	sql, args, err := dialect.Insert(po.UserTable).Prepared(true).Rows(data).ToSQL()
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
-
-	if _, err = r.db.Driver.ExecContext(ctx, sql); err != nil {
+	r.db.Tracef(sql, args...)
+	if _, err = r.db.ExecContext(ctx, sql, args...); err != nil {
 		return errors.Wrap(err, sql)
 	}
 	return nil
@@ -100,17 +104,19 @@ func (r *UserRepository) Save(ctx context.Context, ug *domain.UserAggregate) err
 
 // UpdatePass 修改用户密码
 func (r *UserRepository) UpdatePass(ctx context.Context, uid uint, pass string) error {
-	ug, err := r.GetOne(ctx, uid)
+	user, err := r.GetOne(ctx, uid)
 	if err != nil {
 		return err
 	}
-	ug.User.SetPassword(pass)
-	userPO := new(po.UserConvertor).CreateUserPO(ug)
-	sql, _, err := r.db.PerSQL(r.db.Update(userPO.TableName()).Set(userPO).Where(goqu.C("user_id").Eq(uid)).ToSQL())
+	user.SetPassword(pass)
+	userPO := new(po.UserConvertor).CreateUserPO(user)
+	sql, args, err := dialect.Update(po.UserTable).Prepared(true).Set(userPO).
+		Where(goqu.C("user_id").Eq(uid)).ToSQL()
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
-	if _, err = r.db.Driver.ExecContext(ctx, sql); err != nil {
+	r.db.Tracef(sql, args...)
+	if _, err = r.db.ExecContext(ctx, sql, args...); err != nil {
 		return errors.Wrap(err, sql)
 	}
 	return nil

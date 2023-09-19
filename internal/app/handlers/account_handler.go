@@ -38,3 +38,12 @@ func (h *AccountHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		Token: session.FormatToken(),
 	})
 }
+
+// HandleLogout 注销登录
+func (h *AccountHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	if err := h.sessionService.Remove(r.Context()); err != nil {
+		response.Error(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, "success", nil)
+}

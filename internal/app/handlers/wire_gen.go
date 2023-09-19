@@ -11,14 +11,14 @@ import (
 	"demo/internal/infrastructure/repos/mysql_repos_impl"
 	"demo/internal/infrastructure/repos/redis_repos_impl"
 	"demo/internal/pkg/db"
-	"github.com/redis/go-redis/v9"
+	"demo/internal/pkg/logger"
 )
 
 // Injectors from wire.go:
 
 // NewUserAPI 实例化用户控制器
-func NewUserAPI(dc *db.Connector, rdb *redis.Client) *UserHandler {
-	userRepository := mysql_repos_impl.NewUserRepository(dc, rdb)
+func NewUserAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
+	userRepository := mysql_repos_impl.NewUserRepository(dc, rdb, lg)
 	userService := service.NewUserService(userRepository)
 	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)
@@ -27,8 +27,8 @@ func NewUserAPI(dc *db.Connector, rdb *redis.Client) *UserHandler {
 }
 
 // NewAccountAPI 实例化管理员账户控制器
-func NewAccountAPI(dc *db.Connector, rdb *redis.Client) *AccountHandler {
-	accountRepository := mysql_repos_impl.NewAccountRepository(dc, rdb)
+func NewAccountAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
+	accountRepository := mysql_repos_impl.NewAccountRepository(dc, rdb, lg)
 	accountService := service.NewAccountService(accountRepository)
 	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)

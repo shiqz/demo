@@ -8,9 +8,8 @@ import (
 	"demo/internal/app/response"
 	"demo/internal/app/router/admin"
 	"demo/internal/pkg/db"
+	"demo/internal/pkg/logger"
 	"github.com/go-chi/chi/v5"
-	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -20,21 +19,21 @@ func HandleNotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 // Init 初始化路由
-func Init(db *db.Connector, rdb *redis.Client, lg *log.Logger) *chi.Mux {
+func Init(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *chi.Mux {
 	mux := chi.NewMux()
 	mux.Use(middlewares.HandleLogger(lg), middlewares.HandleFinal, middlewares.HandleRecover, middlewares.HandleCors)
 	mux.NotFound(HandleNotFound)
 	mux.MethodNotAllowed(HandleNotFound)
 	mux.Route("/api/admin", func(r chi.Router) {
-		admin.InitRoute(db, rdb, r)
+		admin.InitRoute(dc, rdb, lg, r)
 	})
 
 	// 用户接口
-	UserAPI := handlers.NewUserAPI(db, rdb)
+	UserAPI := handlers.NewUserAPI(dc, rdb, lg)
 	mux.Post("/register", UserAPI.HandleRegister)
 	mux.Post("/login", UserAPI.HandleLogin)
 	mux.Route("/", func(auth chi.Router) {
-		auth.Use(middlewares.NewHandleAuthVerify(db, rdb))
+		auth.Use(middlewares.NewHandleAuthVerify(dc, rdb))
 		auth.Delete("/login", UserAPI.HandleLogout)
 		auth.Get("/my/identity", UserAPI.HandleIdentity)
 		auth.Put("/my/password", UserAPI.HandleChangePass)

@@ -2,12 +2,12 @@ package commands
 
 import (
 	"context"
-	"demo/internal/domain"
+	"demo/internal/domain/entity"
 )
 
 type UserCommandService struct {
 }
 
-func (c *UserCommandService) Create(ctx context.Context, ug *domain.UserAggregate) error {
+func (c *UserCommandService) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }

@@ -29,22 +29,29 @@ var (
 	})
 )
 
+type Logger struct {
+	*logrus.Logger
+}
+
 // init 默认日志
 func init() {
 	logrus.SetFormatter(formatter)
 	logrus.SetOutput(writer)
-	logrus.SetLevel(logrus.TraceLevel)
 }
 
 // New 创建日志
-func New(lv string) *logrus.Logger {
+func New(lv string) *Logger {
 	lg := logrus.New()
 	lg.SetOutput(writer)
 	lg.SetFormatter(formatter)
+	lg.SetLevel(GetLogLevel(lv))
+	return &Logger{lg}
+}
+
+func GetLogLevel(lv string) logrus.Level {
 	level, err := logrus.ParseLevel(lv)
 	if err != nil {
 		level = logrus.TraceLevel
 	}
-	lg.SetLevel(level)
-	return lg
+	return level
 }

@@ -1,15 +1,15 @@
 # API服务配置
 server:
-  addr: :8000       # HTTP绑定端口
+  addr: :8080       # HTTP绑定端口
   log: info         # 日志等级：trance, debug, info, warn, error, fatal, panic
-  version: v3.0.0   # 版本
 
 # MySQL配置
 mysql:
-  host: 127.0.0.1:3306
+  host: mysql:3306
   user: root
   password: mysql_pwd
   database: demo
+  debug: false
   maxIdleConn: 10
   maxOpenConn: 100
   connMaxIdleTime: 1h
@@ -17,6 +17,6 @@ mysql:
 
 # redis 配置
 redis:
-  host: 127.0.0.1:6379
+  host: redis:6379
   password:
   database: 0

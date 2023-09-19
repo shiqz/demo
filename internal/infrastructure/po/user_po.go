@@ -2,7 +2,6 @@
 package po
 
 import (
-	"demo/internal/domain"
 	"demo/internal/domain/entity"
 	"demo/internal/domain/types"
 	"time"
@@ -20,41 +19,34 @@ type User struct {
 	CreateTime int64  `db:"create_time"`
 }
 
-func (*User) TableName() string {
-	return "users"
-}
-
 // UserConvertor 用户数据转换
-type UserConvertor struct {
-}
+type UserConvertor struct{}
 
 // CreateUserEntity op 转为 aggregate
-func (uc *UserConvertor) CreateUserEntity(u User) *domain.UserAggregate {
-	et := &entity.User{
-		UserID:     u.UserID,
-		Username:   u.Username,
-		Password:   u.Passwd,
-		Salt:       u.Salt,
-		Nickname:   u.Nickname,
-		CreateTime: time.Unix(u.CreateTime, 0),
+func (uc *UserConvertor) CreateUserEntity(vo User) *entity.User {
+	item := &entity.User{
+		UserID:     vo.UserID,
+		Username:   vo.Username,
+		Password:   vo.Passwd,
+		Salt:       vo.Salt,
+		Nickname:   vo.Nickname,
+		CreateTime: time.Unix(vo.CreateTime, 0),
 	}
-	et.Gender = types.UserGender(u.Gender)
-	et.Status = types.UserState(u.Status)
-	return &domain.UserAggregate{
-		User: et,
-	}
+	item.Gender = types.UserGender(vo.Gender)
+	item.Status = types.UserState(vo.Status)
+	return item
 }
 
 // CreateUserPO aggregate -> PO
-func (uc *UserConvertor) CreateUserPO(ug *domain.UserAggregate) *User {
+func (uc *UserConvertor) CreateUserPO(vo *entity.User) *User {
 	return &User{
-		UserID:     ug.User.UserID,
-		Username:   ug.User.Username,
-		Salt:       ug.User.Salt,
-		Nickname:   ug.User.Nickname,
-		Passwd:     ug.User.Password,
-		CreateTime: ug.User.CreateTime.Unix(),
-		Gender:     uint(ug.User.Gender),
-		Status:     uint(ug.User.Status),
+		UserID:     vo.UserID,
+		Username:   vo.Username,
+		Salt:       vo.Salt,
+		Nickname:   vo.Nickname,
+		Passwd:     vo.Password,
+		CreateTime: vo.CreateTime.Unix(),
+		Gender:     uint(vo.Gender),
+		Status:     uint(vo.Status),
 	}
 }
