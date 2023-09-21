@@ -11,12 +11,14 @@ import (
 	"time"
 )
 
+// TokenPrefix 授权登录token前缀
 const TokenPrefix = "Bearer"
 
 var random *rand.Rand
 var charsets = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 var (
+	// ErrInvalidToken token 错误
 	ErrInvalidToken = errors.New("invalid token")
 )
 

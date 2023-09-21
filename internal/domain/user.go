@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// DefaultUserPass 用户重置默认密码
 	DefaultUserPass = "123@Joyparty"
 )
 

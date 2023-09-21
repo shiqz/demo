@@ -9,11 +9,13 @@ import (
 	"net/http"
 )
 
+// AccountHandler 账户控制器
 type AccountHandler struct {
 	srv            domain.AccountService
 	sessionService domain.SessionService
 }
 
+// NewAccountHandler 实例化账户控制器
 func NewAccountHandler(srv domain.AccountService, session domain.SessionService) *AccountHandler {
 	return &AccountHandler{srv: srv, sessionService: session}
 }

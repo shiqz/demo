@@ -12,6 +12,7 @@ import (
 // User assembler
 type User struct{}
 
+// ToEntityFromCreateDTO 用户创建实体
 func (u *User) ToEntityFromCreateDTO(dto *dto.UserCreateDTO) *entity.User {
 	item := &entity.User{
 		Username:   dto.Username,
@@ -24,6 +25,7 @@ func (u *User) ToEntityFromCreateDTO(dto *dto.UserCreateDTO) *entity.User {
 	return item
 }
 
+// ToFilterFromQueryDTO 转换为查询
 func (u *User) ToFilterFromQueryDTO(vo *dto.QueryUsersDTO) *domain.UserFilter {
 	item := &domain.UserFilter{
 		Filter: vo.GetBaseFilter(),

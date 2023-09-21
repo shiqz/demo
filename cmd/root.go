@@ -1,8 +1,8 @@
+// Package cmd 命令行工具
 package cmd
 
 import (
 	hc "example/internal/app/commands"
-	_ "example/internal/pkg/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

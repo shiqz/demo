@@ -6,7 +6,6 @@ import (
 	"example/internal/infrastructure/config"
 	"example/internal/pkg/logger"
 	"fmt"
-	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"

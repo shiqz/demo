@@ -8,8 +8,8 @@ package handlers
 
 import (
 	"example/internal/app/service"
-	"example/internal/infrastructure/repos/mysql_repos_impl"
-	"example/internal/infrastructure/repos/redis_repos_impl"
+	"example/internal/infrastructure/repos/mysqlreposimpl"
+	"example/internal/infrastructure/repos/redisrepoimpl"
 	"example/internal/pkg/db"
 	"example/internal/pkg/logger"
 )
@@ -18,9 +18,9 @@ import (
 
 // NewUserAPI 实例化用户控制器
 func NewUserAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
-	userRepository := mysql_repos_impl.NewUserRepository(dc, rdb, lg)
+	userRepository := mysqlreposimpl.NewUserRepository(dc, rdb, lg)
 	userService := service.NewUserService(userRepository)
-	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)
 	userHandler := NewUserHandler(userService, sessionService)
 	return userHandler
@@ -28,9 +28,9 @@ func NewUserAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler
 
 // NewAccountAPI 实例化管理员账户控制器
 func NewAccountAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
-	accountRepository := mysql_repos_impl.NewAccountRepository(dc, rdb, lg)
+	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
 	accountService := service.NewAccountService(accountRepository)
-	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)
 	accountHandler := NewAccountHandler(accountService, sessionService)
 	return accountHandler

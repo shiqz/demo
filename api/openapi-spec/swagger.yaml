@@ -207,12 +207,12 @@ components:
       type: http
       scheme: bearer
       bearerFormat: token
-      description: admin(admin::adminId::token) user(userId::token)
+      description: 格式：admin(admin::adminId::token) user(userId::token)
   schemas:
     ApiResponse:
       type: object
       properties:
-        code:
+        status:
           type: integer
         data:
           type: object

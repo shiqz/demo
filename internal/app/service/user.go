@@ -1,4 +1,4 @@
-// Package services 服务实现
+// Package service 服务实现
 package service
 
 import (

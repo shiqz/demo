@@ -29,6 +29,7 @@ var (
 	})
 )
 
+// Logger 日志句柄
 type Logger struct {
 	*logrus.Logger
 }
@@ -44,11 +45,12 @@ func New(lv string) *Logger {
 	lg := logrus.New()
 	lg.SetOutput(writer)
 	lg.SetFormatter(formatter)
-	lg.SetLevel(GetLogLevel(lv))
+	lg.SetLevel(ParseLogLevel(lv))
 	return &Logger{lg}
 }
 
-func GetLogLevel(lv string) logrus.Level {
+// ParseLogLevel 获取日志等级
+func ParseLogLevel(lv string) logrus.Level {
 	level, err := logrus.ParseLevel(lv)
 	if err != nil {
 		level = logrus.TraceLevel

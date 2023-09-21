@@ -1,5 +1,5 @@
-// Package mysql_repos_impl 仓库MySQL实现
-package mysql_repos_impl
+// Package mysqlreposimpl 仓库MySQL实现
+package mysqlreposimpl
 
 import (
 	"context"
@@ -75,6 +75,7 @@ func (r *AccountRepository) Accounts(ctx context.Context, filter *domain.Account
 	return result, nil
 }
 
+// Save 保存
 func (r *AccountRepository) Save(ctx context.Context, account *entity.Account) error {
 	var data = new(po.AccountConvertor).CreatePO(account)
 	sql, args, err := dialect.Insert(po.AccountTable).Prepared(true).Rows(data).ToSQL()

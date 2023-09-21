@@ -8,8 +8,8 @@ package commands
 
 import (
 	"example/internal/app/service"
-	"example/internal/infrastructure/repos/mysql_repos_impl"
-	"example/internal/infrastructure/repos/redis_repos_impl"
+	"example/internal/infrastructure/repos/mysqlreposimpl"
+	"example/internal/infrastructure/repos/redisrepoimpl"
 	"example/internal/pkg/db"
 	"example/internal/pkg/logger"
 )
@@ -18,7 +18,7 @@ import (
 
 // NewAccountCommand 实例化账号管理命令
 func NewAccountCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
-	accountRepository := mysql_repos_impl.NewAccountRepository(dc, rdb, lg)
+	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
 	accountService := service.NewAccountService(accountRepository)
 	accountHandler := NewAccountHandler(accountService, lg)
 	return accountHandler
@@ -26,7 +26,7 @@ func NewAccountCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *Acco
 
 // NewUserCommand 实例化账号管理命令
 func NewUserCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
-	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)
 	userHandler := NewUserHandler(sessionService)
 	return userHandler

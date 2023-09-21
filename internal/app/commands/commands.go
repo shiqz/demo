@@ -27,13 +27,15 @@ var (
 func Init(cfgFile string) {
 	if cfgFile != "" {
 		if err := os.Setenv(config.EnvConfigName, cfgFile); err != nil {
-			log.Fatal("init config failed", err)
+			log.Errorln("init config failed", err)
+			return
 		}
 	}
 	log.SetLevel(log.InfoLevel)
 	cfg, err := config.Init()
 	if err != nil {
-		log.Fatal("init config failed", err)
+		log.Errorln("init config failed", err)
+		return
 	}
 	lg := logger.New(log.InfoLevel.String())
 	commander = &command{
@@ -63,14 +65,16 @@ func (c *command) depend(name string) *command {
 		// 初始化 database connection
 		dc, err := db.NewMySQL(c.cfg.MySQL, c.lg)
 		if err != nil {
-			log.Fatalf("[Commander]%+v", err)
+			log.Errorf("[Commander]%+v", err)
+			return nil
 		}
 		c.dc = dc
 	case "redis":
 		// 初始化 redis connection
 		rdb, err := db.NewRedis(c.cfg.Redis)
 		if err != nil {
-			log.Fatalf("[Commander]%+v", err)
+			log.Errorf("[Commander]%+v", err)
+			return nil
 		}
 		c.rdb = rdb
 	}

@@ -1,5 +1,5 @@
-// Package redis_repos_impl redis 仓库实现
-package redis_repos_impl
+// Package redisrepoimpl redis 仓库实现
+package redisrepoimpl
 
 import (
 	"context"

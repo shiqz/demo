@@ -8,8 +8,8 @@ package middlewares
 
 import (
 	"example/internal/app/service"
-	"example/internal/infrastructure/repos/mysql_repos_impl"
-	"example/internal/infrastructure/repos/redis_repos_impl"
+	"example/internal/infrastructure/repos/mysqlreposimpl"
+	"example/internal/infrastructure/repos/redisrepoimpl"
 	"example/internal/pkg/db"
 	"example/internal/pkg/logger"
 	"net/http"
@@ -19,7 +19,7 @@ import (
 
 // NewHandleAuthVerify 创建
 func NewHandleAuthVerify(dc *db.Connector, rdb *db.Redis) func(handler http.Handler) http.Handler {
-	sessionRepository := redis_repos_impl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
 	sessionService := service.NewSessionService(sessionRepository)
 	v := HandleAuthVerify(sessionService)
 	return v
@@ -27,7 +27,7 @@ func NewHandleAuthVerify(dc *db.Connector, rdb *db.Redis) func(handler http.Hand
 
 // NewHandlePermissionVerify
 func NewHandlePermissionVerify(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) func(handler http.Handler) http.Handler {
-	accountRepository := mysql_repos_impl.NewAccountRepository(dc, rdb, lg)
+	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
 	permissionService := service.NewPermissionService(accountRepository)
 	v := HandlePermissionVerify(permissionService)
 	return v
