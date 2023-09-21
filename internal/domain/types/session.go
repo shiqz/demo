@@ -48,5 +48,6 @@ const (
 )
 
 var (
+	// ErrInvalidSession session 错误
 	ErrInvalidSession = errors.New("invalid session")
 )
