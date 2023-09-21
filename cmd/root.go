@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	hc "demo/internal/app/commands"
-	_ "demo/internal/pkg/logger"
+	hc "example/internal/app/commands"
+	_ "example/internal/pkg/logger"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -32,11 +32,6 @@ const (
 	remUserSession command = "session-remove" // 删除用户会话
 )
 
-const (
-	ShowVersion command = "version" // 查看版本号
-	RunServer   command = "run"     // 启动服务
-)
-
 var (
 	// 主命令
 	root = &cobra.Command{
@@ -55,20 +50,20 @@ var (
 	admin            = &cobra.Command{Use: "admin", Short: "管理系统账号"}
 	adminSubCommands = commands{
 		adminCreate:     {Use: "create", Short: "创建系统账号", RunE: hc.AdminCreate},
-		adminList:       {Use: "list", Short: "显示系统已创建系统账号", RunE: nil},
-		adminUpdateRole: {Use: "update-role", Short: "更新账号角色", RunE: nil},
-		adminUpdatePass: {Use: "update-pass", Short: "更新账号密码", RunE: nil},
-		showAllRoles:    {Use: "show-roles", Short: "查看系统所有角色", RunE: nil},
-		showAdminRoles:  {Use: "show-admin-role", Short: "查看系统账号拥有角色", RunE: nil},
-		showAllPerms:    {Use: "show-perms", Short: "查看系统所有路由权限", RunE: nil},
-		showRolePerms:   {Use: "show-role-perms", Short: "显示角色拥有路由权限", RunE: nil},
-		showAdminPerms:  {Use: "show-admin-perms", Short: "显示管理员拥有路由权限", RunE: nil},
+		adminList:       {Use: "list", Short: "显示系统已创建系统账号", RunE: hc.ShowAdmins},
+		adminUpdateRole: {Use: "update-role", Short: "更新账号角色", RunE: hc.UpdateAdminRole},
+		adminUpdatePass: {Use: "update-pass", Short: "更新账号密码", RunE: hc.UpdateAdminPass},
+		showAllRoles:    {Use: "show-roles", Short: "查看系统所有角色", RunE: hc.ShowAllRoles},
+		showAdminRoles:  {Use: "show-admin-role", Short: "查看系统账号拥有角色", RunE: hc.ShowAdminRoles},
+		showAllPerms:    {Use: "show-perms", Short: "查看系统所有路由权限", RunE: hc.ShowAllPerms},
+		showRolePerms:   {Use: "show-role-perms", Short: "显示角色拥有路由权限", RunE: hc.ShowRolePerms},
+		showAdminPerms:  {Use: "show-admin-perms", Short: "显示管理员拥有路由权限", RunE: hc.ShowAdminPerms},
 	}
 	// 管理用户
 	user            = &cobra.Command{Use: "user", Short: "管理系统用户"}
 	userSubCommands = commands{
-		setUserSession: {Use: "session-update", Short: "更新用户会话"},
-		remUserSession: {Use: "session-remove", Short: "删除用户会话"},
+		setUserSession: {Use: "session-update", Short: "更新会话过期时间", RunE: hc.UpdateUserSession},
+		remUserSession: {Use: "session-remove", Short: "删除用户会话", RunE: hc.RemoveUserSession},
 	}
 )
 
@@ -105,8 +100,8 @@ func init() {
 	adminSubCommands[showRolePerms].Flags().StringP("role", "r", "", "角色名称")
 	admin.AddCommand(adminSubCommands.all()...)
 	// 管理用户相关参数
-	user.PersistentFlags().StringP("username", "u", "", "设置用户名")
-	userSubCommands[setUserSession].Flags().IntP("time", "t", 0, "过期时间（时间戳）")
+	user.PersistentFlags().String("id", "", "用户ID")
+	userSubCommands[setUserSession].Flags().IntP("time", "t", 0, "会话过期时间（时间戳）")
 	user.AddCommand(userSubCommands.all()...)
 	// 关联到主命令
 	root.AddCommand(version, runAPIServer, admin, user)

@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"demo/internal/app/errs"
-	"demo/internal/app/handlers/dto"
-	"demo/internal/app/response"
-	"demo/internal/domain"
-	"demo/internal/pkg/utils"
+	"example/internal/app/errs"
+	"example/internal/app/handlers/dto"
+	"example/internal/app/response"
+	"example/internal/domain"
+	"example/internal/pkg/utils"
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func NewAccountHandler(srv domain.AccountService, session domain.SessionService)
 // HandleLogin 登录
 func (h *AccountHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.AccountLoginDTO)
-	if err := utils.ParseRequestData(r.Body, data); err != nil {
+	if err := utils.MustParseData(r.Body, data); err != nil {
 		response.Error(w, errs.New(errs.EcInvalidRequest, err))
 		return
 	}
@@ -41,7 +41,7 @@ func (h *AccountHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 // HandleLogout 注销登录
 func (h *AccountHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
-	if err := h.sessionService.Remove(r.Context()); err != nil {
+	if err := h.sessionService.Disconnect(r.Context()); err != nil {
 		response.Error(w, err)
 		return
 	}

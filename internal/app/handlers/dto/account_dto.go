@@ -21,4 +21,12 @@ type (
 	ResAccountLoginDTO struct {
 		Token string `json:"authorizeToken"`
 	}
+
+	// ResAccountInfo 响应账号信息
+	ResAccountInfo struct {
+		ID         uint   `json:"id"`
+		Email      string `json:"email"`
+		Role       string `json:"role"`
+		CreateTime string `json:"create_time"`
+	}
 )

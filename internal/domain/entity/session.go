@@ -1,10 +1,10 @@
 package entity
 
 import (
-	"demo/internal/app/errs"
-	"demo/internal/domain/types"
-	"demo/internal/pkg/utils"
 	"encoding/json"
+	"example/internal/app/errs"
+	"example/internal/domain/types"
+	"example/internal/pkg/utils"
 	"github.com/pkg/errors"
 	"strconv"
 	"strings"

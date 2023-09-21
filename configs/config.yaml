@@ -9,7 +9,7 @@ mysql:
   user: root
   password: mysql_pwd
   database: demo
-  debug: true
+  debug: false
   maxIdleConn: 10
   maxOpenConn: 100
   connMaxIdleTime: 1h

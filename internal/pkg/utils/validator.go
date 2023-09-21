@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"demo/internal/app/errs"
 	"encoding/json"
+	"example/internal/app/errs"
 	"github.com/asaskevich/govalidator"
 	"github.com/dlclark/regexp2"
 	"io"
@@ -22,11 +22,17 @@ func init() {
 	})
 }
 
-// ParseRequestData 请求数据校验
-func ParseRequestData(r io.Reader, data any) error {
+// MustParseData 请求数据校验
+func MustParseData(r io.Reader, data any) error {
 	if err := json.NewDecoder(r).Decode(data); err != nil {
 		return errs.EcInvalidRequest
 	}
+	return Validator(data)
+}
+
+// ParseData 请求数据校验
+func ParseData(r io.Reader, data any) error {
+	_ = json.NewDecoder(r).Decode(data)
 	return Validator(data)
 }
 

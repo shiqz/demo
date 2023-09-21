@@ -5,11 +5,11 @@ services:
     image: dc_api
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./build/package/Dockerfile
     container_name: dc_api
     restart: on-failure
     environment:
-      - CONFIG_FILE=./configs/config.test.yaml
+      - CONFIG_FILE=/configs/config.test.yaml
     expose:
       - 8080
       - 80
@@ -23,7 +23,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: [ "/app", "run" ]
+    command: [ "/app", "run"]
 
   mysql:
     image: mysql

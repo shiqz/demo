@@ -3,10 +3,10 @@ package app
 
 import (
 	"context"
-	"demo/internal/app/router"
-	"demo/internal/infrastructure/config"
-	"demo/internal/pkg/db"
-	"demo/internal/pkg/logger"
+	"example/internal/app/router"
+	"example/internal/infrastructure/config"
+	"example/internal/pkg/db"
+	"example/internal/pkg/logger"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-const Version = "v0.2.6"
+// Version 版本号
+const Version = "v0.2.7"
 
 // APIServer API服务
 type APIServer struct {

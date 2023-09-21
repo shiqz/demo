@@ -2,12 +2,16 @@
 package handlers
 
 import (
-	"demo/internal/app/errs"
-	"demo/internal/app/handlers/assembler"
-	"demo/internal/app/handlers/dto"
-	"demo/internal/app/response"
-	"demo/internal/domain"
-	"demo/internal/pkg/utils"
+	"example/internal/app/errs"
+	"example/internal/app/handlers/assembler"
+	"example/internal/app/handlers/dto"
+	"example/internal/app/response"
+	"example/internal/domain"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
+	"example/internal/pkg/utils"
+	"github.com/pkg/errors"
+	"github.com/redis/go-redis/v9"
 	"net/http"
 )
 
@@ -25,7 +29,7 @@ func NewUserHandler(s1 domain.UserService, s2 domain.SessionService) *UserHandle
 // HandleRegister 用户注册
 func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.UserCreateDTO)
-	if err := utils.ParseRequestData(r.Body, data); err != nil {
+	if err := utils.MustParseData(r.Body, data); err != nil {
 		response.Error(w, errs.New(errs.EcInvalidRequest, err))
 		return
 	}
@@ -41,7 +45,7 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 // HandleLogin 用户登录
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.UserLoginDTO)
-	if err := utils.ParseRequestData(r.Body, data); err != nil {
+	if err := utils.MustParseData(r.Body, data); err != nil {
 		response.Error(w, errs.New(errs.EcInvalidRequest, err))
 		return
 	}
@@ -77,11 +81,12 @@ func (h *UserHandler) HandleIdentity(w http.ResponseWriter, r *http.Request) {
 // HandleChangePass 用户修改密码接口
 func (h *UserHandler) HandleChangePass(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.ChangeUserPassDTO)
-	if err := utils.ParseRequestData(r.Body, data); err != nil {
+	if err := utils.MustParseData(r.Body, data); err != nil {
 		response.Error(w, errs.New(errs.EcInvalidRequest, err))
 		return
 	}
-	if err := h.userService.UpdatePassword(r.Context(), data.Password); err != nil {
+	session := r.Context().Value(types.SessionFlag).(*entity.Session)
+	if err := h.userService.UpdatePassword(r.Context(), session.GetSessionID(), data.Password); err != nil {
 		response.Error(w, err)
 		return
 	}
@@ -90,7 +95,7 @@ func (h *UserHandler) HandleChangePass(w http.ResponseWriter, r *http.Request) {
 
 // HandleLogout 注销登录
 func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
-	if err := h.sessionService.Remove(r.Context()); err != nil {
+	if err := h.sessionService.Disconnect(r.Context()); err != nil {
 		response.Error(w, err)
 		return
 	}
@@ -100,7 +105,7 @@ func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 // HandleUsers 查询用户列表
 func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.QueryUsersDTO)
-	if err := utils.ParseRequestData(r.Body, data); err != nil {
+	if err := utils.ParseData(r.Body, data); err != nil {
 		response.Error(w, errs.New(errs.EcInvalidRequest, err))
 		return
 	}
@@ -110,4 +115,48 @@ func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Success(w, http.StatusOK, "success", new(assembler.User).ToFilterResult(users))
+}
+
+// ChangeUserStatus 修改用户状态
+func (h *UserHandler) ChangeUserStatus(w http.ResponseWriter, r *http.Request) {
+	data := new(dto.ChangeUserStatusDTO)
+	if err := utils.MustParseData(r.Body, data); err != nil {
+		response.Error(w, errs.New(errs.EcInvalidRequest, err))
+		return
+	}
+	ctx := r.Context()
+	status := types.ParseUserState(data.Status)
+	if err := h.userService.UpdateStatus(ctx, data.UserID, status); err != nil {
+		response.Error(w, err)
+		return
+	}
+	// 禁用后用户将被强制退出
+	if status == types.UserStateDisabled {
+		us, err := h.sessionService.Get(ctx, types.UserSession, data.UserID)
+		if err != nil && !errors.Is(err, redis.Nil) {
+			response.Error(w, err)
+			return
+		}
+		if us != nil {
+			if err = h.sessionService.Remove(ctx, us.FormatKey()); err != nil {
+				response.Error(w, err)
+				return
+			}
+		}
+	}
+	response.Success(w, http.StatusOK, "success", nil)
+}
+
+// ResetUserPass 重置用户密码
+func (h *UserHandler) ResetUserPass(w http.ResponseWriter, r *http.Request) {
+	data := new(dto.ResetUserPassDTO)
+	if err := utils.MustParseData(r.Body, data); err != nil {
+		response.Error(w, errs.New(errs.EcInvalidRequest, err))
+		return
+	}
+	if err := h.userService.UpdatePassword(r.Context(), data.UserID, domain.DefaultUserPass); err != nil {
+		response.Error(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, "success", nil)
 }

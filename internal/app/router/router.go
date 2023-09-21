@@ -2,19 +2,19 @@
 package router
 
 import (
-	"demo/internal/app/errs"
-	"demo/internal/app/handlers"
-	"demo/internal/app/middlewares"
-	"demo/internal/app/response"
-	"demo/internal/app/router/admin"
-	"demo/internal/pkg/db"
-	"demo/internal/pkg/logger"
+	"example/internal/app/errs"
+	"example/internal/app/handlers"
+	"example/internal/app/middlewares"
+	"example/internal/app/response"
+	"example/internal/app/router/admin"
+	"example/internal/pkg/db"
+	"example/internal/pkg/logger"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
 // HandleNotFound 响应不存在路由
-func HandleNotFound(w http.ResponseWriter, r *http.Request) {
+func HandleNotFound(w http.ResponseWriter, _ *http.Request) {
 	response.Error(w, errs.New(errs.EcNotFound, errs.ErrAPINotFound))
 }
 

@@ -1,9 +1,9 @@
 package entity
 
 import (
-	"demo/internal/app/errs"
-	"demo/internal/domain/types"
-	"demo/internal/pkg/utils"
+	"example/internal/app/errs"
+	"example/internal/domain/types"
+	"example/internal/pkg/utils"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -33,4 +33,14 @@ func (u *Account) ValidPassword(pass string) error {
 		return errs.EcInvalidUser
 	}
 	return nil
+}
+
+// SetRole 设置角色
+func (u *Account) SetRole(roles types.Roles) {
+	u.Roles = roles
+}
+
+// HasPermission 路由权限校验
+func (u *Account) HasPermission(route types.Route) bool {
+	return u.Roles.HasPermission(route)
 }

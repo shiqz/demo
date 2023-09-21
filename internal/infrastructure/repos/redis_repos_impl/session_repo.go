@@ -3,8 +3,8 @@ package redis_repos_impl
 
 import (
 	"context"
-	"demo/internal/domain"
-	"demo/internal/pkg/db"
+	"example/internal/domain"
+	"example/internal/pkg/db"
 	"time"
 )
 

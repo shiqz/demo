@@ -22,10 +22,22 @@ type (
 
 	// QueryUsersDTO 查询用户列表结构
 	QueryUsersDTO struct {
-		UserID   *uint   `json:"userId"`
-		Nickname *string `json:"nickname"`
-		Gender   *uint   `json:"gender"`
-		Status   *uint   `json:"status"`
+		BaseFilter `valid:"-"`
+		UserID     *uint   `json:"userId" valid:"-"`
+		Nickname   *string `json:"nickname" valid:"-"`
+		Gender     *uint   `json:"gender" valid:"-"`
+		Status     *uint   `json:"status" valid:"-"`
+	}
+
+	// ChangeUserStatusDTO 修改用户状态请求
+	ChangeUserStatusDTO struct {
+		UserID uint   `json:"userId" valid:"required,numeric"`
+		Status string `json:"operate" valid:"in(enable|disable)"`
+	}
+
+	// ResetUserPassDTO 重置用户密码
+	ResetUserPassDTO struct {
+		UserID uint `json:"userId" valid:"required,numeric"`
 	}
 )
 

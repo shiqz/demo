@@ -2,8 +2,8 @@
 package po
 
 import (
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
 	"time"
 )
 
@@ -22,8 +22,8 @@ type User struct {
 // UserConvertor 用户数据转换
 type UserConvertor struct{}
 
-// CreateUserEntity op 转为 aggregate
-func (uc *UserConvertor) CreateUserEntity(vo User) *entity.User {
+// ToEntity op 转为 aggregate
+func (uc *UserConvertor) ToEntity(vo User) *entity.User {
 	item := &entity.User{
 		UserID:     vo.UserID,
 		Username:   vo.Username,

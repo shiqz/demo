@@ -2,8 +2,9 @@
 package entity
 
 import (
-	"demo/internal/domain/types"
-	"demo/internal/pkg/utils"
+	"example/internal/app/errs"
+	"example/internal/domain/types"
+	"example/internal/pkg/utils"
 	"time"
 )
 
@@ -25,7 +26,18 @@ func (u *User) SetPassword(pass string) {
 	u.Password = utils.EncryptMD5(pass + u.Salt)
 }
 
-// IsValidPassword 验证密码是否正确
-func (u *User) IsValidPassword(pass string) bool {
-	return u.Password == utils.EncryptMD5(pass+u.Salt)
+// ValidPassword 验证密码是否正确
+func (u *User) ValidPassword(pass string) error {
+	if u.Password != utils.EncryptMD5(pass+u.Salt) {
+		return errs.EcInvalidUser
+	}
+	return nil
+}
+
+// ValidState 验证状态是否正常
+func (u *User) ValidState() error {
+	if u.Status == types.UserStateDisabled {
+		return errs.EcStatusForbidden
+	}
+	return nil
 }

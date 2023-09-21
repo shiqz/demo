@@ -4,6 +4,7 @@ package types
 import (
 	"fmt"
 	"github.com/modood/table"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,9 +22,9 @@ type Permission int
 // Permissions 路由权限集合类型
 type Permissions []Permission
 
-// Info 路由信息
-type Info struct {
-	Route  string
+// Route 路由信息
+type Route struct {
+	Path   string
 	Name   string
 	Method string
 }
@@ -52,10 +53,10 @@ var (
 		UserRoleDefault: "默认角色（无任何权限）",
 	}
 	// AllPerms 所有路由权限信息
-	AllPerms = map[Permission]Info{
-		Users:          {Route: "/api/admin/users", Method: http.MethodGet, Name: "获取用户列表接口"},
-		UsersResetPass: {Route: "/api/admin/users/passwd", Method: http.MethodPatch, Name: "重置用户密码"},
-		UsersSetStatus: {Route: "/api/admin/users/status", Method: http.MethodPatch, Name: "更改用户状态"},
+	AllPerms = map[Permission]Route{
+		Users:          {Path: "/api/admin/users", Method: http.MethodGet, Name: "获取用户列表接口"},
+		UsersResetPass: {Path: "/api/admin/users/passwd", Method: http.MethodPatch, Name: "重置用户密码"},
+		UsersSetStatus: {Path: "/api/admin/users/status", Method: http.MethodPatch, Name: "更改用户状态"},
 	}
 	// RolePermissionsMap 角色路由权限集合
 	RolePermissionsMap = map[UserRole]Permissions{
@@ -105,7 +106,7 @@ func (r UserRole) GetPermissionsTable() string {
 	for _, key := range keys {
 		data = append(data, field{
 			ID:     int(key),
-			Route:  AllPerms[key].Route,
+			Route:  AllPerms[key].Path,
 			Name:   AllPerms[key].Name,
 			Method: AllPerms[key].Method,
 		})
@@ -129,10 +130,64 @@ func (rs Roles) String() string {
 	for _, r := range rs {
 		str = append(str, string(r))
 	}
+	sort.Strings(str)
 	if len(str) == 0 {
 		str = append(str, UserRoleDefault.String())
 	}
 	return strings.Join(str, ",")
+}
+
+// Eq 判断是否不相等
+func (rs Roles) Eq(cr Roles) bool {
+	return rs.String() == cr.String()
+}
+
+// HasPermission 验证路由权限
+func (rs Roles) HasPermission(route Route) bool {
+	for _, role := range rs {
+		for _, perm := range role.GetPermissions() {
+			owner := perm.GetRouteInfo()
+			if owner.Method == route.Method && owner.Path == route.Path {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ShowPerms 显示路由权限
+func (rs Roles) ShowPerms() {
+	allPerms := make(map[Permission]Route)
+	for _, userRole := range rs {
+		for _, permission := range userRole.GetPermissions() {
+			if _, ok := allPerms[permission]; !ok {
+				allPerms[permission] = permission.GetRouteInfo()
+			}
+		}
+	}
+	if len(allPerms) == 0 {
+		log.Warnf("角色：%s 无任何路由权限", rs)
+		return
+	}
+	type item struct {
+		Method string
+		Route  string
+		Name   string
+	}
+	var list []item
+	for _, info := range allPerms {
+		list = append(list, item{
+			Method: info.Method,
+			Route:  info.Path,
+			Name:   info.Name,
+		})
+	}
+	fmt.Println(table.Table(list))
+}
+
+// GetRouteInfo 获取路由权限信息
+func (p Permission) GetRouteInfo() Route {
+	return AllPerms[p]
 }
 
 // ParseRoles 将字符串解析为角色集合
@@ -142,39 +197,17 @@ func ParseRoles(str string, skipInvalid bool) (Roles, error) {
 		return roles, nil
 	}
 	for _, roleStr := range strings.Split(str, ",") {
-		role := UserRole(roleStr)
+		role := UserRole(strings.TrimSpace(roleStr))
+		if role == "" {
+			continue
+		}
 		if !role.Valid() {
 			if skipInvalid {
 				continue
 			}
-			return nil, fmt.Errorf("invalid role: %s", roleStr)
+			return nil, fmt.Errorf("invalid role: %s", role)
 		}
 		roles = append(roles, role)
 	}
 	return roles, nil
-}
-
-// HasPermission 路由权限校验
-func HasPermission(raw, uri, method string) bool {
-	// 判断路由是否需要校验
-	var per Permission
-	for id, info := range AllPerms {
-		if info.Route == uri && info.Method == method {
-			per = id
-			break
-		}
-	}
-	// 路由不需要做权限校验
-	if per == 0 {
-		return true
-	}
-	roles, _ := ParseRoles(raw, true)
-	for _, role := range roles {
-		for _, permission := range role.GetPermissions() {
-			if permission == per {
-				return true
-			}
-		}
-	}
-	return false
 }

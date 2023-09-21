@@ -1,7 +1,7 @@
 package main
 
 import (
-	"demo/cmd"
+	"example/cmd"
 )
 
 func main() {

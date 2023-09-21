@@ -64,6 +64,7 @@ func (c MySQL) Builder() *mysql.Config {
 	return &mysql.Config{
 		User:    c.User,
 		Passwd:  c.Password,
+		Net:     "tcp",
 		Addr:    c.Host,
 		DBName:  c.Database,
 		Timeout: time.Second,

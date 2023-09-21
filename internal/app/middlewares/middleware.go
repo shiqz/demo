@@ -2,13 +2,13 @@ package middlewares
 
 import (
 	"context"
-	"demo/internal/app/errs"
-	"demo/internal/app/response"
-	"demo/internal/domain"
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
-	"demo/internal/pkg/logger"
-	"demo/internal/pkg/utils"
+	"example/internal/app/errs"
+	"example/internal/app/response"
+	"example/internal/domain"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
+	"example/internal/pkg/logger"
+	"example/internal/pkg/utils"
 	"fmt"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -45,7 +45,6 @@ func HandleRecover(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	}
-
 	return http.HandlerFunc(fn)
 }
 
@@ -122,4 +121,17 @@ func HandleFinal(next http.Handler) http.Handler {
 			}
 		}
 	})
+}
+
+// HandlePermissionVerify 路由权限校验中间件
+func HandlePermissionVerify(srv domain.PermissionService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := srv.CheckPermission(r.Context(), types.Route{Method: r.Method, Path: r.URL.Path}); err != nil {
+				response.Error(w, err)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

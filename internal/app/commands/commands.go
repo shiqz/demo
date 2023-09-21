@@ -2,11 +2,10 @@
 package commands
 
 import (
-	"context"
-	"demo/internal/app"
-	"demo/internal/infrastructure/config"
-	"demo/internal/pkg/db"
-	"demo/internal/pkg/logger"
+	"example/internal/app"
+	"example/internal/infrastructure/config"
+	"example/internal/pkg/db"
+	"example/internal/pkg/logger"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -36,7 +35,7 @@ func Init(cfgFile string) {
 	if err != nil {
 		log.Fatal("init config failed", err)
 	}
-	lg := logger.New(cfg.Server.LogLevel)
+	lg := logger.New(log.InfoLevel.String())
 	commander = &command{
 		cfg: cfg,
 		lg:  lg,
@@ -44,7 +43,7 @@ func Init(cfgFile string) {
 }
 
 // depends 批量初始化依赖, 若未指定，则初始化所有依赖
-func (c *command) depends(args ...string) *command {
+func (c *command) inject(args ...string) *command {
 	if len(args) == 0 {
 		args = depends
 	}
@@ -83,13 +82,17 @@ func (c *command) runAPIServer() {
 	app.RunAPIServer(*c.cfg)
 }
 
-// Version 查看版本
+// 查看版本
 func (c *command) version() {
 	log.Infof("version: %s", app.Version)
 }
 
-// AdminCreate 创建管理员
-func (c *command) adminCreate(email, pass, role string) error {
-	ctx := context.Background()
-	return NewAccountCommand(c.dc, c.rdb, c.lg).Create(ctx, email, pass, role)
+// 账户控制器
+func (c *command) account() *AccountHandler {
+	return NewAccountCommand(c.dc, c.rdb, c.lg)
+}
+
+// 账户控制器
+func (c *command) user() *UserHandler {
+	return NewUserCommand(c.dc, c.rdb, c.lg)
 }

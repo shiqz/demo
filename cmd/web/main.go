@@ -2,8 +2,8 @@
 package main
 
 import (
-	"demo/internal/app"
-	"demo/internal/infrastructure/config"
+	"example/internal/app"
+	"example/internal/infrastructure/config"
 	log "github.com/sirupsen/logrus"
 )
 

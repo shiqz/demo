@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"demo/internal/domain"
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
+	"example/internal/domain"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
 )
 
 // SessionService 会话服务
@@ -49,8 +49,13 @@ func (s *SessionService) Refresh(ctx context.Context, session *entity.Session) e
 	return s.repo.Save(ctx, session.FormatKey(), info, session.GetDuration())
 }
 
-// Remove 移除会话
-func (s *SessionService) Remove(ctx context.Context) error {
+// Disconnect 断开会话
+func (s *SessionService) Disconnect(ctx context.Context) error {
 	session := ctx.Value(types.SessionFlag).(*entity.Session)
 	return s.repo.Delete(ctx, session.FormatKey())
+}
+
+// Remove 移除会话
+func (s *SessionService) Remove(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
 }

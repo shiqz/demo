@@ -1,0 +1,288 @@
+openapi: 3.1.0
+info:
+  title: 考核项目API说明文档
+  description: 欢迎使用
+  contact:
+    email: 1598665020@qq.com
+  version: 1.0.11
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Admin
+    description: 管理后台相关接口
+  - name: User
+    description: 用户相关接口
+paths:
+  /api/admin/login:
+    post:
+      tags:
+        - Admin
+      summary: 管理员登录
+      operationId: adminLogin
+      description: 调用管理后台其他接口前必须先调用此接口登录
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                status: 200
+                message: success
+                data:
+                  authorizeToken: admin::1::eBQElgq4uqv7HR13MDPU
+        400:
+          description: 请求数据错误
+        403:
+          description: 用户或密码错误
+    delete:
+      tags:
+        - Admin
+      summary: 管理员注销登录
+      operationId: adminLogout
+      description: 退出登录后，用户会话将被注销
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+  /api/admin/users:
+    get:
+      tags:
+        - Admin
+      summary: 用户列表
+      operationId: userList
+      description: 查询用户列表
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        401:
+          description: Unauthorized
+        403:
+          description: 你没有该操作权限
+  /api/admin/users/status:
+    patch:
+      tags:
+        - Admin
+      summary: 修改用户状态
+      operationId: changeUserStatus
+      requestBody:
+        content:
+          application/json:
+            example: {"userId":1000000,"operate":"enable"}
+        description: operate => enable 启用, disable 禁用
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid params
+        401:
+          description: Unauthorized
+        403:
+          description: 你没有该操作权限
+        404:
+          description: 用户不存在
+  /api/admin/users/passwd:
+    patch:
+      tags:
+        - Admin
+      summary: 重置用户密码
+      operationId: resetUserPass
+      requestBody:
+        content:
+          application/json:
+            example: {"userId":1000000}
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid params
+        401:
+          description: Unauthorized
+        403:
+          description: 你没有该操作权限
+        404:
+          description: 用户不存在
+  /register:
+    post:
+      tags:
+        - User
+      summary: 用户注册
+      operationId: userRegister
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegDTO'
+      responses:
+        200:
+          description: OK
+        400:
+          description: 参数错误
+        409:
+          description: 用户已被注册
+  /login:
+    post:
+      tags:
+        - User
+      summary: 用户登录
+      operationId: userLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginDTO'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              example: {"status":200,"message":"success","data":{"authorizeToken":"1000000::s0cF6553VKL89gf2UHpP"}}
+        400:
+          description: 参数错误
+        406:
+          description: 用户名或密码错误
+    delete:
+      tags:
+        - User
+      summary: 用户注销登录
+      operationId: userLogout
+      description: 退出登录后，用户会话将被注销
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+  /my/identity:
+    get:
+      tags:
+        - User
+      summary: 获取用户信息
+      operationId: userIdentity
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              example: {"userId":1000000,"username":"stan","gender":0,"nickname":"stan"}
+        401:
+          description: Unauthorized
+  /my/password:
+    put:
+      tags:
+        - User
+      summary: 修改用户密码
+      operationId: userChangePass
+      requestBody:
+        description: 密码必须包含大小写字母、数字、特殊符号至少一位，且长度为8~20位
+        content:
+          application/json:
+            example: {"password": "Test123.."}
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+      security:
+
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+      description: admin(admin::adminId::token) user(userId::token)
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        data:
+          type: object
+        message:
+          type: string
+    User:
+      type: object
+      properties:
+        userId:
+          type: integer
+          examples:
+            - 100000
+            - 100001
+        nickname:
+          type: string
+          examples:
+            - stan
+            - jack
+        gender:
+          type: integer
+          examples:
+            - 0
+            - 1
+            - 2
+        status:
+          type: integer
+          examples:
+            - 1
+            - 2
+    AdminLoginDTO:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          examples:
+            - admin@test.com
+        password:
+          type: string
+          examples:
+            - Test123..
+          description: 密码必须包含大小写字母、数字、特殊符号至少一位，且长度为8~20位
+    UserRegDTO:
+      type: object
+      properties:
+        username:
+          type: string
+          examples:
+            - stan
+          description: 用户名由1-20位字母或数字组成
+        password:
+          type: string
+          examples:
+            - Test123..
+          description: 密码必须包含大小写字母、数字、特殊符号至少一位，且长度为8~20位
+        nickname:
+          type: string
+          examples:
+            - Foever
+          description: 昵称长度不能超过15个字符
+    UserLoginDTO:
+      type: object
+      properties:
+        username:
+          type: string
+          examples:
+            - stan
+          description: 用户名由1-20位字母或数字组成
+        password:
+          type: string
+          examples:
+            - Test123..
+          description: 密码必须包含大小写字母、数字、特殊符号至少一位，且长度为8~20位

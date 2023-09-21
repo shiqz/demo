@@ -2,8 +2,8 @@
 package response
 
 import (
-	"demo/internal/app/errs"
 	"encoding/json"
+	"example/internal/app/errs"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"

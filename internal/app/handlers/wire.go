@@ -4,11 +4,11 @@
 package handlers
 
 import (
-	"demo/internal/app/service"
-	"demo/internal/infrastructure/repos/mysql_repos_impl"
-	"demo/internal/infrastructure/repos/redis_repos_impl"
-	"demo/internal/pkg/db"
-	"demo/internal/pkg/logger"
+	"example/internal/app/service"
+	"example/internal/infrastructure/repos/mysql_repos_impl"
+	"example/internal/infrastructure/repos/redis_repos_impl"
+	"example/internal/pkg/db"
+	"example/internal/pkg/logger"
 	"github.com/google/wire"
 )
 

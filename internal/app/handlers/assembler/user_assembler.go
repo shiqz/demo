@@ -2,10 +2,10 @@
 package assembler
 
 import (
-	"demo/internal/app/handlers/dto"
-	"demo/internal/domain"
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
+	"example/internal/app/handlers/dto"
+	"example/internal/domain"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
 	"time"
 )
 
@@ -18,12 +18,16 @@ func (u *User) ToEntityFromCreateDTO(dto *dto.UserCreateDTO) *entity.User {
 		Nickname:   dto.Nickname,
 		CreateTime: time.Now(),
 	}
+	item.Gender = types.UserGenderUnknown
+	item.Status = types.UserStateNormal
 	item.SetPassword(dto.Password)
 	return item
 }
 
 func (u *User) ToFilterFromQueryDTO(vo *dto.QueryUsersDTO) *domain.UserFilter {
-	item := &domain.UserFilter{}
+	item := &domain.UserFilter{
+		Filter: vo.GetBaseFilter(),
+	}
 	if vo.UserID != nil && *vo.UserID > 0 {
 		item.UserID = vo.UserID
 	}
@@ -43,7 +47,9 @@ func (u *User) ToFilterFromQueryDTO(vo *dto.QueryUsersDTO) *domain.UserFilter {
 
 // ToFilterResult 转换查询结果
 func (u *User) ToFilterResult(users []*entity.User) dto.ResQueryDTO {
-	result := dto.ResQueryDTO{}
+	result := dto.ResQueryDTO{
+		List: make([]dto.ResUserinfoItem, 0),
+	}
 	for _, user := range users {
 		result.List = append(result.List, dto.ResUserinfoItem{
 			UserID:   user.UserID,

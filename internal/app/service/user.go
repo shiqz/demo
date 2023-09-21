@@ -4,10 +4,10 @@ package service
 import (
 	"context"
 	"database/sql"
-	"demo/internal/app/errs"
-	"demo/internal/domain"
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
+	"example/internal/app/errs"
+	"example/internal/domain"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
 	"github.com/pkg/errors"
 )
 
@@ -42,8 +42,11 @@ func (s *UserService) Login(ctx context.Context, username, pass string) (*entity
 		}
 		return nil, err
 	}
-	if !user.IsValidPassword(pass) {
-		return nil, errs.EcInvalidUser
+	if err = user.ValidPassword(pass); err != nil {
+		return nil, err
+	}
+	if err = user.ValidState(); err != nil {
+		return nil, err
 	}
 	return entity.NewSession(types.UserSession, user.UserID), nil
 }
@@ -55,13 +58,35 @@ func (s *UserService) GetUserinfo(ctx context.Context) (*entity.User, error) {
 }
 
 // UpdatePassword 更新用户密码
-func (s *UserService) UpdatePassword(ctx context.Context, pass string) error {
-	session := ctx.Value(types.SessionFlag).(*entity.Session)
-	return s.repo.UpdatePass(ctx, session.GetSessionID(), pass)
+func (s *UserService) UpdatePassword(ctx context.Context, id uint, pass string) error {
+	user, err := s.repo.GetOne(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errs.New(errs.EcNotFound, domain.ErrUserNotFound)
+		}
+		return err
+	}
+	user.SetPassword(pass)
+	return s.repo.UpdatePass(ctx, user)
 }
 
 // Users 用户列表
 func (s *UserService) Users(ctx context.Context, filter *domain.UserFilter) ([]*entity.User, error) {
+	return s.repo.Users(ctx, filter)
+}
 
-	return nil, nil
+// UpdateStatus 更新用户密码
+func (s *UserService) UpdateStatus(ctx context.Context, id uint, status types.UserState) error {
+	user, err := s.repo.GetOne(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errs.New(errs.EcNotFound, domain.ErrUserNotFound)
+		}
+		return err
+	}
+	if user.Status == status {
+		return nil
+	}
+	user.Status = status
+	return s.repo.UpdateStatus(ctx, user)
 }

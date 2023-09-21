@@ -2,9 +2,8 @@
 package po
 
 import (
-	"demo/internal/domain"
-	"demo/internal/domain/entity"
-	"demo/internal/domain/types"
+	"example/internal/domain/entity"
+	"example/internal/domain/types"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type Account struct {
 type AccountConvertor struct{}
 
 // CreateEntity op 转为 aggregate
-func (uc *AccountConvertor) CreateEntity(data Account) *domain.AccountAggregate {
+func (c *AccountConvertor) CreateEntity(data Account) *entity.Account {
 	item := &entity.Account{
 		AdminID:    data.AdminID,
 		Email:      data.Email,
@@ -29,18 +28,28 @@ func (uc *AccountConvertor) CreateEntity(data Account) *domain.AccountAggregate 
 		CreateTime: time.Unix(data.CreateTime, 0),
 	}
 	item.Roles, _ = types.ParseRoles(data.Roles, true)
-	return &domain.AccountAggregate{
-		Account: item,
-	}
+	return item
 }
 
 // CreatePO aggregate -> PO
-func (uc *AccountConvertor) CreatePO(vo *domain.AccountAggregate) *Account {
+func (c *AccountConvertor) CreatePO(vo *entity.Account) *Account {
 	item := &Account{
-		Email:      vo.Account.Email,
-		CreateTime: vo.Account.CreateTime.Unix(),
-		Roles:      vo.Account.Roles.String(),
-		Passwd:     vo.Account.Password,
+		Email:      vo.Email,
+		CreateTime: vo.CreateTime.Unix(),
+		Roles:      vo.Roles.String(),
+		Passwd:     vo.Password,
 	}
+	return item
+}
+
+// ToEntity 转化为实体
+func (c *AccountConvertor) ToEntity(vo Account) *entity.Account {
+	item := &entity.Account{
+		AdminID:    vo.AdminID,
+		Email:      vo.Email,
+		CreateTime: time.Unix(vo.CreateTime, 0),
+		Password:   vo.Passwd,
+	}
+	item.Roles, _ = types.ParseRoles(vo.Roles, true)
 	return item
 }

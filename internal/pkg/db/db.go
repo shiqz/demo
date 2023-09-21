@@ -3,8 +3,8 @@ package db
 
 import (
 	"context"
-	"demo/internal/infrastructure/config"
-	"demo/internal/pkg/logger"
+	"example/internal/infrastructure/config"
+	"example/internal/pkg/logger"
 	"fmt"
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/jmoiron/sqlx"
