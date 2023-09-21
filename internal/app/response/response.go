@@ -11,14 +11,16 @@ import (
 )
 
 const (
-	// DefaultEmptyData 默认空数据
-	DefaultEmptyData = "{}"
 	// DefaultStatus 默认状态码
 	DefaultStatus = http.StatusOK
-	// HTTPHeaderStatusFlag 内置响应状态标识
+	// HTTPHeaderStatusFlag 内置响应数据标识
 	HTTPHeaderStatusFlag = "_INTERNAL_RESPONSE_DATA_FLAG"
-	HTTPHeaderDataFlag   = "_INTERNAL_RESPONSE_STATUS_FLAG"
+	// HTTPHeaderDataFlag 内置响应状态标识
+	HTTPHeaderDataFlag = "_INTERNAL_RESPONSE_STATUS_FLAG"
 )
+
+// DefaultData 默认数据
+var DefaultData = struct{}{}
 
 // response HTTP响应体
 type response struct {
@@ -30,13 +32,13 @@ type response struct {
 
 // response 实例化响应
 func respond(w http.ResponseWriter, code int, msg string, data any) *response {
+	if data == nil {
+		data = DefaultData
+	}
 	return &response{w: w, Data: data, Status: code, Message: msg}
 }
 
 func (res response) json(status int) {
-	if res.Data == nil {
-		res.Data = DefaultEmptyData
-	}
 	res.w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	marshal, err := json.Marshal(res)
 	if err != nil {
