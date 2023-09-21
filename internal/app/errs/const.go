@@ -24,12 +24,15 @@ const (
 	EcStatusForbidden
 	// EcStatusForbiddenForPerms 权限不足
 	EcStatusForbiddenForPerms
+	// EcInvalidParams 错误参数
+	EcInvalidParams
 )
 
 var (
 	// EcMessages 内部错误码对应错误消息
 	EcMessages = map[ErrStatus]string{
 		EcInvalidRequest:          "Invalid request",
+		EcInvalidParams:           "Invalid params",
 		EcInternalServerErr:       "Internal serve error",
 		EcNotFound:                "404 not found",
 		EcInvalidUser:             "账号或密码错误",
@@ -44,6 +47,7 @@ var (
 		EcInternalServerErr:       http.StatusInternalServerError,
 		EcNotFound:                http.StatusNotFound,
 		EcInvalidUser:             http.StatusNotAcceptable,
+		EcInvalidParams:           http.StatusNotAcceptable,
 		EcUserHasBeenExist:        http.StatusConflict,
 		EcUnauthorized:            http.StatusUnauthorized,
 		EcStatusForbidden:         http.StatusForbidden,

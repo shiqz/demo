@@ -99,6 +99,11 @@ func (s *Session) GetScene() types.SessionScene {
 	return s.scene
 }
 
+// Remove 获取会话有效时长
+func (s *Session) Remove() {
+	s.RefreshTime = 0
+}
+
 // State 获取Session状态
 func (s *Session) state() types.SessionState {
 	sub := s.RefreshTime - time.Now().Unix()

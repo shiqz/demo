@@ -52,7 +52,11 @@ func (s *SessionService) Refresh(ctx context.Context, session *entity.Session) e
 // Disconnect 断开会话
 func (s *SessionService) Disconnect(ctx context.Context) error {
 	session := ctx.Value(types.SessionFlag).(*entity.Session)
-	return s.repo.Delete(ctx, session.FormatKey())
+	if err := s.repo.Delete(ctx, session.FormatKey()); err != nil {
+		return err
+	}
+	session.Remove()
+	return nil
 }
 
 // Remove 移除会话

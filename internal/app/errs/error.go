@@ -20,9 +20,7 @@ type Error struct {
 func (e Error) Error() string {
 	if e.err != nil {
 		switch e.ec {
-		case EcInvalidRequest:
-			return e.err.Error()
-		case EcNotFound:
+		case EcInvalidRequest, EcInvalidParams, EcNotFound:
 			return e.err.Error()
 		}
 	}

@@ -30,7 +30,7 @@ func NewUserHandler(s1 domain.UserService, s2 domain.SessionService) *UserHandle
 func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	data := new(dto.UserCreateDTO)
 	if err := utils.MustParseData(r.Body, data); err != nil {
-		response.Error(w, errs.New(errs.EcInvalidRequest, err))
+		response.Error(w, errs.New(errs.EcInvalidParams, err))
 		return
 	}
 
