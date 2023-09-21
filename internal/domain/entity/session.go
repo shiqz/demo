@@ -99,7 +99,7 @@ func (s *Session) GetScene() types.SessionScene {
 	return s.scene
 }
 
-// Remove 获取会话有效时长
+// Remove 过期token
 func (s *Session) Remove() {
 	s.RefreshTime = 0
 }
