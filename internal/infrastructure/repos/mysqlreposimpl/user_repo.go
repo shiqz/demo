@@ -91,9 +91,12 @@ func (r *UserRepository) Save(ctx context.Context, user *entity.User) error {
 		return errors.Wrap(err, sql)
 	}
 	r.inject.GetDB().Tracef(sql, args...)
-	if _, err = r.inject.GetDB().ExecContext(ctx, sql, args...); err != nil {
+	result, err := r.inject.GetDB().ExecContext(ctx, sql, args...)
+	if err != nil {
 		return errors.Wrap(err, sql)
 	}
+	id, _ := result.LastInsertId()
+	user.UserID = uint(id)
 	return nil
 }
 
@@ -135,8 +138,23 @@ func (r *UserRepository) UpdatePass(ctx context.Context, user *entity.User) erro
 		"passwd": user.Password,
 		"salt":   user.Salt,
 	}
+	return r.update(ctx, user.UserID, update)
+}
+
+// UpdateStatus 修改用户状态
+func (r *UserRepository) UpdateStatus(ctx context.Context, user *entity.User) error {
+	update := goqu.Record{
+		"status": user.Status,
+	}
+	if err := r.update(ctx, user.UserID, update); err != nil {
+		return err
+	}
+	return errors.WithStack(r.inject.GetRedis().Del(ctx, r.key(user.UserID)).Err())
+}
+
+func (r *UserRepository) update(ctx context.Context, id uint, update goqu.Record) error {
 	sql, args, err := dialect.Update(po.UserTable).Prepared(true).Set(update).
-		Where(goqu.C("user_id").Eq(user.UserID)).ToSQL()
+		Where(goqu.C("user_id").Eq(id)).ToSQL()
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
@@ -145,21 +163,4 @@ func (r *UserRepository) UpdatePass(ctx context.Context, user *entity.User) erro
 		return errors.Wrap(err, sql)
 	}
 	return nil
-}
-
-// UpdateStatus 修改用户状态
-func (r *UserRepository) UpdateStatus(ctx context.Context, user *entity.User) error {
-	update := goqu.Record{
-		"status": user.Status,
-	}
-	sql, args, err := dialect.Update(po.UserTable).Prepared(true).Set(update).
-		Where(goqu.C("user_id").Eq(user.UserID)).ToSQL()
-	if err != nil {
-		return errors.Wrap(err, sql)
-	}
-	r.inject.GetDB().Tracef(sql, args...)
-	if _, err = r.inject.GetDB().ExecContext(ctx, sql, args...); err != nil {
-		return errors.Wrap(err, sql)
-	}
-	return r.inject.GetRedis().Del(ctx, r.key(user.UserID)).Err()
 }
