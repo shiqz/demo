@@ -5,9 +5,7 @@ import (
 	"context"
 	"example/internal/app/response"
 	"example/internal/app/router"
-	"example/internal/infrastructure/config"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
+	"example/internal/infrastructure/depend"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
@@ -22,7 +20,7 @@ const Version = "v0.2.7"
 
 // APIServer API服务
 type APIServer struct {
-	Logger *logger.Logger
+	inject *depend.Injecter
 	mux    chi.Router
 }
 
@@ -32,7 +30,7 @@ func (s *APIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 	_, err := w.(*response.Responser).Render()
 	if err != nil {
-		s.Logger.Errorf("response render, %+v", err)
+		s.inject.Log.Errorf("response render, %+v", err)
 	}
 }
 
@@ -40,7 +38,7 @@ func (s *APIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *APIServer) Start(ctx context.Context, addr string) error {
 	srv := &http.Server{Addr: addr, Handler: s}
 	ec := make(chan error, 1)
-	s.Logger.Infof("[Server]running on %s", addr)
+	s.inject.Log.Infof("[Server]running on %s", addr)
 
 	go func(ec chan<- error) {
 		if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
@@ -48,11 +46,13 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 		}
 	}(ec)
 
+	// 关闭服务
 	shutdown := func(timeout time.Duration) error {
 		fmt.Println()
-		s.Logger.Info("[Server]shutting...")
+		s.inject.Log.Info("[Server]shutting...")
 		shutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
+		s.inject.Shutdown()
 		if err := srv.Shutdown(shutCtx); err != nil {
 			return errors.WithStack(fmt.Errorf("[Server]shutdonwn: %w", err))
 		}
@@ -67,27 +67,13 @@ func (s *APIServer) Start(ctx context.Context, addr string) error {
 }
 
 // RunAPIServer 运行API服务
-func RunAPIServer(cfg config.AppConfig) {
+func RunAPIServer(inject *depend.Injecter) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	srv := &APIServer{Logger: logger.New(cfg.Server.LogLevel)}
-	srv.Logger.Tracef("[config]%s", cfg.GetConfigFile())
+	go inject.HealthCheck()
+	srv := &APIServer{inject: inject}
 
-	// init database connection
-	dc, err := db.NewMySQL(cfg.MySQL, srv.Logger)
-	if err != nil {
-		srv.Logger.Fatalf("[Server]failed run: %+v", err)
-	}
-
-	// init redis connection
-	rdb, err := db.NewRedis(cfg.Redis)
-	if err != nil {
-		srv.Logger.Fatalf("[Server]failed run: %+v", err)
-	}
-
-	srv.mux = router.Init(dc, rdb, srv.Logger)
-	if err = srv.Start(ctx, cfg.Server.Addr); err != nil {
-		srv.Logger.Fatalf("%+v", err)
-	}
+	srv.mux = router.Init(inject)
+	return srv.Start(ctx, inject.Config().Server.Addr)
 }

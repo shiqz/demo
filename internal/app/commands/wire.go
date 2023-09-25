@@ -5,15 +5,14 @@ package commands
 
 import (
 	"example/internal/app/service"
+	"example/internal/infrastructure/depend"
 	"example/internal/infrastructure/repos/mysqlreposimpl"
 	"example/internal/infrastructure/repos/redisrepoimpl"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
 	"github.com/google/wire"
 )
 
 // NewAccountCommand 实例化账号管理命令
-func NewAccountCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
+func NewAccountCommand(inject *depend.Injecter) *AccountHandler {
 	panic(wire.Build(
 		mysqlreposimpl.NewAccountRepository,
 		service.NewAccountService,
@@ -22,7 +21,7 @@ func NewAccountCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *Acco
 }
 
 // NewUserCommand 实例化账号管理命令
-func NewUserCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
+func NewUserCommand(inject *depend.Injecter) *UserHandler {
 	panic(wire.Build(
 		redisrepoimpl.NewSessionRepository,
 		service.NewSessionService,

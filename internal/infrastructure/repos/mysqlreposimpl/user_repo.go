@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"example/internal/domain"
 	"example/internal/domain/entity"
+	"example/internal/infrastructure/depend"
 	"example/internal/infrastructure/po"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
@@ -17,14 +16,12 @@ import (
 
 // UserRepository 用户仓库
 type UserRepository struct {
-	db    *db.Connector
-	redis *db.Redis
-	lg    *logger.Logger
+	inject *depend.Injecter
 }
 
 // NewUserRepository 实例化User repo
-func NewUserRepository(dc *db.Connector, redis *db.Redis, lg *logger.Logger) domain.UserRepository {
-	return &UserRepository{db: dc, redis: redis, lg: lg}
+func NewUserRepository(inject *depend.Injecter) domain.UserRepository {
+	return &UserRepository{inject}
 }
 
 // key format key
@@ -38,9 +35,9 @@ func (r *UserRepository) reload(ctx context.Context, id uint) (*entity.User, err
 	if err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
-	r.db.Tracef(sql, args...)
+	r.inject.GetDB().Tracef(sql, args...)
 	var data po.User
-	if err = r.db.GetContext(ctx, &data, sql, args...); err != nil {
+	if err = r.inject.GetDB().GetContext(ctx, &data, sql, args...); err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
 	u := new(po.UserConvertor).ToEntity(data)
@@ -48,7 +45,7 @@ func (r *UserRepository) reload(ctx context.Context, id uint) (*entity.User, err
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if err = r.redis.Set(ctx, r.key(id), string(marshal), -1).Err(); err != nil {
+	if err = r.inject.GetRedis().Set(ctx, r.key(id), string(marshal), -1).Err(); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return u, nil
@@ -60,9 +57,9 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, uname string) (*
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	r.db.Tracef(sql, args...)
+	r.inject.GetDB().Tracef(sql, args...)
 	var data po.User
-	if err = r.db.GetContext(ctx, &data, sql, args...); err != nil {
+	if err = r.inject.GetDB().GetContext(ctx, &data, sql, args...); err != nil {
 		return nil, errors.Wrap(err, sql)
 	}
 	return new(po.UserConvertor).ToEntity(data), nil
@@ -70,7 +67,7 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, uname string) (*
 
 // GetOne 根据ID获取用户
 func (r *UserRepository) GetOne(ctx context.Context, id uint) (*entity.User, error) {
-	cacheInfo, err := r.redis.Get(ctx, r.key(id)).Result()
+	cacheInfo, err := r.inject.GetRedis().Get(ctx, r.key(id)).Result()
 	empty := errors.Is(err, redis.Nil)
 	if err != nil && !empty {
 		return nil, err
@@ -93,8 +90,8 @@ func (r *UserRepository) Save(ctx context.Context, user *entity.User) error {
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
-	r.db.Tracef(sql, args...)
-	if _, err = r.db.ExecContext(ctx, sql, args...); err != nil {
+	r.inject.GetDB().Tracef(sql, args...)
+	if _, err = r.inject.GetDB().ExecContext(ctx, sql, args...); err != nil {
 		return errors.Wrap(err, sql)
 	}
 	return nil
@@ -121,8 +118,8 @@ func (r *UserRepository) Users(ctx context.Context, filter *domain.UserFilter) (
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	r.db.Tracef(sql, args...)
-	if err = r.db.SelectContext(ctx, &list, sql, args...); err != nil {
+	r.inject.GetDB().Tracef(sql, args...)
+	if err = r.inject.GetDB().SelectContext(ctx, &list, sql, args...); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	var result []*entity.User
@@ -143,8 +140,8 @@ func (r *UserRepository) UpdatePass(ctx context.Context, user *entity.User) erro
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
-	r.db.Tracef(sql, args...)
-	if _, err = r.db.ExecContext(ctx, sql, args...); err != nil {
+	r.inject.GetDB().Tracef(sql, args...)
+	if _, err = r.inject.GetDB().ExecContext(ctx, sql, args...); err != nil {
 		return errors.Wrap(err, sql)
 	}
 	return nil
@@ -160,9 +157,9 @@ func (r *UserRepository) UpdateStatus(ctx context.Context, user *entity.User) er
 	if err != nil {
 		return errors.Wrap(err, sql)
 	}
-	r.db.Tracef(sql, args...)
-	if _, err = r.db.ExecContext(ctx, sql, args...); err != nil {
+	r.inject.GetDB().Tracef(sql, args...)
+	if _, err = r.inject.GetDB().ExecContext(ctx, sql, args...); err != nil {
 		return errors.Wrap(err, sql)
 	}
-	return r.redis.Del(ctx, r.key(user.UserID)).Err()
+	return r.inject.GetRedis().Del(ctx, r.key(user.UserID)).Err()
 }

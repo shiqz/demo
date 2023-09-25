@@ -1,7 +1,7 @@
 # API服务配置
 server:
   addr: :8080       # HTTP绑定端口
-  log: trance         # 日志等级：trance, debug, info, warn, error, fatal, panic
+  logLevel: Trace         # 日志等级：trace, debug, info, warn, error, fatal, panic
 
 # MySQL配置
 mysql:
@@ -9,7 +9,7 @@ mysql:
   user: root
   password: mysql_pwd
   database: demo
-  debug: false
+  debug: true
   maxIdleConn: 10
   maxOpenConn: 100
   connMaxIdleTime: 1h

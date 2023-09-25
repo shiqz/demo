@@ -8,25 +8,24 @@ package commands
 
 import (
 	"example/internal/app/service"
+	"example/internal/infrastructure/depend"
 	"example/internal/infrastructure/repos/mysqlreposimpl"
 	"example/internal/infrastructure/repos/redisrepoimpl"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
 )
 
 // Injectors from wire.go:
 
 // NewAccountCommand 实例化账号管理命令
-func NewAccountCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
-	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
+func NewAccountCommand(inject *depend.Injecter) *AccountHandler {
+	accountRepository := mysqlreposimpl.NewAccountRepository(inject)
 	accountService := service.NewAccountService(accountRepository)
-	accountHandler := NewAccountHandler(accountService, lg)
+	accountHandler := NewAccountHandler(accountService, inject)
 	return accountHandler
 }
 
 // NewUserCommand 实例化账号管理命令
-func NewUserCommand(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
-	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
+func NewUserCommand(inject *depend.Injecter) *UserHandler {
+	sessionRepository := redisrepoimpl.NewSessionRepository(inject)
 	sessionService := service.NewSessionService(sessionRepository)
 	userHandler := NewUserHandler(sessionService)
 	return userHandler

@@ -8,26 +8,25 @@ package middlewares
 
 import (
 	"example/internal/app/service"
+	"example/internal/infrastructure/depend"
 	"example/internal/infrastructure/repos/mysqlreposimpl"
 	"example/internal/infrastructure/repos/redisrepoimpl"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
 	"net/http"
 )
 
 // Injectors from wire.go:
 
 // NewHandleAuthVerify 创建
-func NewHandleAuthVerify(dc *db.Connector, rdb *db.Redis) func(handler http.Handler) http.Handler {
-	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
+func NewHandleAuthVerify(inject *depend.Injecter) func(handler http.Handler) http.Handler {
+	sessionRepository := redisrepoimpl.NewSessionRepository(inject)
 	sessionService := service.NewSessionService(sessionRepository)
 	v := HandleAuthVerify(sessionService)
 	return v
 }
 
 // NewHandlePermissionVerify
-func NewHandlePermissionVerify(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) func(handler http.Handler) http.Handler {
-	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
+func NewHandlePermissionVerify(inject *depend.Injecter) func(handler http.Handler) http.Handler {
+	accountRepository := mysqlreposimpl.NewAccountRepository(inject)
 	permissionService := service.NewPermissionService(accountRepository)
 	v := HandlePermissionVerify(permissionService)
 	return v

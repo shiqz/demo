@@ -4,6 +4,7 @@ package main
 import (
 	"example/internal/app"
 	"example/internal/infrastructure/config"
+	"example/internal/infrastructure/depend"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -12,5 +13,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("加载系统配置异常：%+v", err)
 	}
-	app.RunAPIServer(*cfg)
+	// 注入
+	inject, err := depend.NewInjecter(*cfg)
+	if err != nil {
+		log.Fatalf("[Server]%+v", err)
+	}
+	if err = app.RunAPIServer(inject); err != nil {
+		log.Fatalf("[Server]%+v", err)
+	}
 }

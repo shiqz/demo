@@ -83,7 +83,9 @@ func (cmds commands) all() []*cobra.Command {
 func init() {
 	// 初始化
 	cobra.OnInitialize(func() {
-		hc.Init(cfgFile)
+		if err := hc.Init(cfgFile); err != nil {
+			log.Fatalf("%+v", err)
+		}
 	})
 	// 基本参数
 	root.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "运行配置文件")

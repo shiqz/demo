@@ -9,7 +9,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -58,8 +57,8 @@ func NewMySQL(cfg config.MySQL, lg *logger.Logger) (*Connector, error) {
 }
 
 // NewRedis 连接Redis实例
-func NewRedis(cfg config.Redis) (*Redis, error) {
-	log.Tracef("[redis]%s", cfg.Host)
+func NewRedis(cfg config.Redis, lg *logger.Logger) (*Redis, error) {
+	lg.Tracef("[redis]%s", cfg.Host)
 	client := redis.NewClient(&redis.Options{
 		Addr:         cfg.Host,
 		Password:     cfg.Password,

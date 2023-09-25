@@ -6,6 +6,7 @@ import (
 	"example/internal/domain"
 	"example/internal/domain/entity"
 	"example/internal/domain/types"
+	log "github.com/sirupsen/logrus"
 )
 
 // PermissionService 权限服务
@@ -26,6 +27,7 @@ func (s *PermissionService) CheckPermission(ctx context.Context, route types.Rou
 		return err
 	}
 	if !account.HasPermission(route) {
+		log.Warnf("[Permission]account:%d not permission %s", account.AdminID, route)
 		return errs.EcStatusForbiddenForPerms
 	}
 	return nil

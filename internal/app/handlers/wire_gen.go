@@ -8,29 +8,28 @@ package handlers
 
 import (
 	"example/internal/app/service"
+	"example/internal/infrastructure/depend"
 	"example/internal/infrastructure/repos/mysqlreposimpl"
 	"example/internal/infrastructure/repos/redisrepoimpl"
-	"example/internal/pkg/db"
-	"example/internal/pkg/logger"
 )
 
 // Injectors from wire.go:
 
 // NewUserAPI 实例化用户控制器
-func NewUserAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *UserHandler {
-	userRepository := mysqlreposimpl.NewUserRepository(dc, rdb, lg)
+func NewUserAPI(inject *depend.Injecter) *UserHandler {
+	userRepository := mysqlreposimpl.NewUserRepository(inject)
 	userService := service.NewUserService(userRepository)
-	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(inject)
 	sessionService := service.NewSessionService(sessionRepository)
 	userHandler := NewUserHandler(userService, sessionService)
 	return userHandler
 }
 
 // NewAccountAPI 实例化管理员账户控制器
-func NewAccountAPI(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *AccountHandler {
-	accountRepository := mysqlreposimpl.NewAccountRepository(dc, rdb, lg)
+func NewAccountAPI(inject *depend.Injecter) *AccountHandler {
+	accountRepository := mysqlreposimpl.NewAccountRepository(inject)
 	accountService := service.NewAccountService(accountRepository)
-	sessionRepository := redisrepoimpl.NewSessionRepository(rdb)
+	sessionRepository := redisrepoimpl.NewSessionRepository(inject)
 	sessionService := service.NewSessionService(sessionRepository)
 	accountHandler := NewAccountHandler(accountService, sessionService)
 	return accountHandler

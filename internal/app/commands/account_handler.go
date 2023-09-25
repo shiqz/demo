@@ -6,7 +6,7 @@ import (
 	"example/internal/app/handlers/dto"
 	"example/internal/domain"
 	"example/internal/domain/types"
-	"example/internal/pkg/logger"
+	"example/internal/infrastructure/depend"
 	"example/internal/pkg/utils"
 	"fmt"
 	"github.com/asaskevich/govalidator"
@@ -17,13 +17,13 @@ import (
 
 // AccountHandler 账户控制器
 type AccountHandler struct {
-	srv domain.AccountService
-	lg  *logger.Logger
+	srv    domain.AccountService
+	inject *depend.Injecter
 }
 
 // NewAccountHandler 实例化
-func NewAccountHandler(srv domain.AccountService, lg *logger.Logger) *AccountHandler {
-	return &AccountHandler{srv: srv, lg: lg}
+func NewAccountHandler(srv domain.AccountService, inject *depend.Injecter) *AccountHandler {
+	return &AccountHandler{srv: srv, inject: inject}
 }
 
 // Create 创建账户
@@ -106,7 +106,7 @@ func (c *AccountHandler) ShowAccountRole(email string) error {
 	if err != nil {
 		return err
 	}
-	c.lg.Infof("管理员：%s, 角色：%s", email, account.Roles.String())
+	c.inject.Log.Infof("管理员：%s, 角色：%s", email, account.Roles.String())
 	return nil
 }
 
@@ -120,7 +120,7 @@ func (c *AccountHandler) ShowAccountPerms(email string) error {
 	if err != nil {
 		return err
 	}
-	c.lg.Infof("管理员：%s, 角色：%s, 拥有路由权限：", email, account.Roles.String())
+	c.inject.Log.Infof("管理员：%s, 角色：%s, 拥有路由权限：", email, account.Roles.String())
 	account.Roles.ShowPerms()
 	return nil
 }

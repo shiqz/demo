@@ -79,7 +79,6 @@ func Init() (*AppConfig, error) {
 	}
 	viper.SetConfigFile(cfgFile)
 	viper.SetConfigType(DefaultConfigType)
-	log.Tracef("[config]%s", cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, errors.WithStack(err)
 	}

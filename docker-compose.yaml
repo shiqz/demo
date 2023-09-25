@@ -18,6 +18,7 @@ services:
       - "80:80"
     volumes:
       - ./configs:/configs
+      - ./runtime:/runtime
     depends_on:
       mysql:
         condition: service_healthy
