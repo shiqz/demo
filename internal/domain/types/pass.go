@@ -28,7 +28,7 @@ func NewPassword(method PassMethod, pass string) (*Password, error) {
 	case PassMethodHash:
 		en, err := utils.HashPassEncrypt([]byte(pass))
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		p.pass = string(en)
 	default:
