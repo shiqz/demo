@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"example/internal/app/response"
 	"example/internal/app/router"
 	"example/internal/infrastructure/config"
 	"example/internal/pkg/db"
@@ -27,7 +28,12 @@ type APIServer struct {
 
 // ServeHTTP 实现 http Handler 接口
 func (s *APIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w = response.NewResponser(w)
 	s.mux.ServeHTTP(w, r)
+	_, err := w.(*response.Responser).Render()
+	if err != nil {
+		s.Logger.Errorf("response render, %+v", err)
+	}
 }
 
 // Start 启动HTTP服务

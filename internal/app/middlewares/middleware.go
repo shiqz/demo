@@ -15,10 +15,9 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"runtime/debug"
-	"strconv"
+	"time"
 )
 
 // HandleRecover 奔溃处理
@@ -57,10 +56,22 @@ func HandleCors(next http.Handler) http.Handler {
 // HandleLogger 日志中间件
 func HandleLogger(lg *logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return middleware.RequestLogger(&middleware.DefaultLogFormatter{
+		lf := &middleware.DefaultLogFormatter{
 			Logger:  lg,
 			NoColor: false,
-		})(next)
+		}
+
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			entry := lf.NewLogEntry(r)
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			res := ww.Unwrap().(*response.Responser)
+			t1 := time.Now()
+			defer func() {
+				entry.Write(res.Status(), res.BytesWritten(), ww.Header(), time.Since(t1), nil)
+			}()
+			next.ServeHTTP(ww, middleware.WithLogEntry(r, entry))
+		}
+		return http.HandlerFunc(fn)
 	}
 }
 
@@ -101,27 +112,6 @@ func HandleAuthVerify(srv domain.SessionService) func(http.Handler) http.Handler
 			}
 		})
 	}
-}
-
-// HandleFinal 结束执行[响应后置]
-func HandleFinal(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-		data := w.Header().Get(response.HTTPHeaderDataFlag)
-		finalStatus := w.Header().Get(response.HTTPHeaderStatusFlag)
-		code, err := strconv.ParseInt(finalStatus, 10, 64)
-		if err != nil {
-			code = http.StatusInternalServerError
-		}
-		w.Header().Del(response.HTTPHeaderDataFlag)
-		w.Header().Del(response.HTTPHeaderStatusFlag)
-		w.WriteHeader(int(code))
-		if data != "" {
-			if _, err = w.Write([]byte(data)); err != nil {
-				log.Errorf("%+v", errors.Wrap(err, "final respose"))
-			}
-		}
-	})
 }
 
 // HandlePermissionVerify 路由权限校验中间件

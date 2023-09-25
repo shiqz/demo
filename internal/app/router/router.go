@@ -21,7 +21,7 @@ func HandleNotFound(w http.ResponseWriter, _ *http.Request) {
 // Init 初始化路由
 func Init(dc *db.Connector, rdb *db.Redis, lg *logger.Logger) *chi.Mux {
 	mux := chi.NewMux()
-	mux.Use(middlewares.HandleLogger(lg), middlewares.HandleFinal, middlewares.HandleRecover, middlewares.HandleCors)
+	mux.Use(middlewares.HandleLogger(lg), middlewares.HandleRecover, middlewares.HandleCors)
 	mux.NotFound(HandleNotFound)
 	mux.MethodNotAllowed(HandleNotFound)
 	mux.Route("/api/admin", func(r chi.Router) {

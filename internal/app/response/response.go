@@ -2,21 +2,18 @@
 package response
 
 import (
+	"bytes"
 	"encoding/json"
 	"example/internal/app/errs"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strconv"
 )
 
 const (
 	// DefaultStatus 默认状态码
 	DefaultStatus = http.StatusOK
-	// HTTPHeaderStatusFlag 内置响应数据标识
-	HTTPHeaderStatusFlag = "_INTERNAL_RESPONSE_DATA_FLAG"
-	// HTTPHeaderDataFlag 内置响应状态标识
-	HTTPHeaderDataFlag = "_INTERNAL_RESPONSE_STATUS_FLAG"
 )
 
 // DefaultData 默认数据
@@ -38,14 +35,20 @@ func respond(w http.ResponseWriter, code int, msg string, data any) *response {
 	return &response{w: w, Data: data, Status: code, Message: msg}
 }
 
+// 响应JSON
 func (res response) json(status int) {
 	res.w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	marshal, err := json.Marshal(res)
 	if err != nil {
 		log.Errorf("%+v", errors.Wrap(err, "response encode"))
 	}
-	res.w.Header().Set(HTTPHeaderDataFlag, string(marshal))
-	res.w.Header().Set(HTTPHeaderStatusFlag, strconv.FormatInt(int64(status), 10))
+	// Unwrap 到自定义响应器
+	r := res.w.(middleware.WrapResponseWriter).Unwrap().(*Responser)
+	r.WriteHeader(status)
+	_, err = r.Write(marshal)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "response write"))
+	}
 }
 
 // Success 响应成功
@@ -67,4 +70,53 @@ func Error(w http.ResponseWriter, err error) {
 		log.Errorf("%+v", err)
 	}
 	respond(w, e.Code(), e.Error(), nil).json(e.HTTPStatus())
+}
+
+// Responser 自定义响应器
+type Responser struct {
+	w     http.ResponseWriter
+	bytes int
+	tee   bytes.Buffer
+	code  int
+}
+
+// NewResponser 实例化响应器
+func NewResponser(w http.ResponseWriter) http.ResponseWriter {
+	return &Responser{w: w}
+}
+
+// Header 实现Header
+func (r *Responser) Header() http.Header {
+	return r.w.Header()
+}
+
+// Write 覆盖写入
+func (r *Responser) Write(buf []byte) (int, error) {
+	n, err := r.tee.Write(buf)
+	r.bytes += n
+	return n, err
+}
+
+// WriteHeader 覆盖状态码写入
+func (r *Responser) WriteHeader(statusCode int) {
+	r.code = statusCode
+}
+
+// Render 最终写入
+func (r *Responser) Render() (n int64, err error) {
+	r.w.WriteHeader(r.code)
+	if n, err = r.tee.WriteTo(r.w); err != nil {
+		err = errors.WithStack(err)
+	}
+	return n, err
+}
+
+// Status 获取状态码
+func (r *Responser) Status() int {
+	return r.code
+}
+
+// BytesWritten 获取写入字节数
+func (r *Responser) BytesWritten() int {
+	return r.bytes
 }
