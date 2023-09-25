@@ -27,11 +27,10 @@ func (uc *UserConvertor) ToEntity(vo User) *entity.User {
 	item := &entity.User{
 		UserID:     vo.UserID,
 		Username:   vo.Username,
-		Password:   vo.Passwd,
-		Salt:       vo.Salt,
 		Nickname:   vo.Nickname,
 		CreateTime: time.Unix(vo.CreateTime, 0),
 	}
+	item.Password = types.ParseMD5Password(vo.Passwd, vo.Salt)
 	item.Gender = types.UserGender(vo.Gender)
 	item.Status = types.UserState(vo.Status)
 	return item
@@ -42,9 +41,9 @@ func (uc *UserConvertor) CreateUserPO(vo *entity.User) *User {
 	return &User{
 		UserID:     vo.UserID,
 		Username:   vo.Username,
-		Salt:       vo.Salt,
+		Salt:       vo.Password.GetSalt(),
 		Nickname:   vo.Nickname,
-		Passwd:     vo.Password,
+		Passwd:     vo.Password.String(),
 		CreateTime: vo.CreateTime.Unix(),
 		Gender:     uint(vo.Gender),
 		Status:     uint(vo.Status),

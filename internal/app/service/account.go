@@ -29,8 +29,8 @@ func (s *AccountService) Login(ctx context.Context, email, pass string) (*entity
 		}
 		return nil, err
 	}
-	if err = account.ValidPassword(pass); err != nil {
-		return nil, err
+	if !account.Password.Valid(pass) {
+		return nil, errs.EcInvalidUser
 	}
 	return entity.NewSession(types.AdminSession, account.AdminID), nil
 }

@@ -42,8 +42,8 @@ func (s *UserService) Login(ctx context.Context, username, pass string) (*entity
 		}
 		return nil, err
 	}
-	if err = user.ValidPassword(pass); err != nil {
-		return nil, err
+	if !user.Password.Valid(pass) {
+		return nil, errs.EcInvalidUser
 	}
 	if err = user.ValidState(); err != nil {
 		return nil, err
@@ -66,7 +66,9 @@ func (s *UserService) UpdatePassword(ctx context.Context, id uint, pass string) 
 		}
 		return err
 	}
-	user.SetPassword(pass)
+	if err = user.SetPassword(pass); err != nil {
+		return err
+	}
 	return s.repo.UpdatePass(ctx, user)
 }
 

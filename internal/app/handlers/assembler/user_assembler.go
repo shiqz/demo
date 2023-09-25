@@ -13,16 +13,18 @@ import (
 type User struct{}
 
 // ToEntityFromCreateDTO 用户创建实体
-func (u *User) ToEntityFromCreateDTO(dto *dto.UserCreateDTO) *entity.User {
+func (u *User) ToEntityFromCreateDTO(vo *dto.UserCreateDTO) (*entity.User, error) {
 	item := &entity.User{
-		Username:   dto.Username,
-		Nickname:   dto.Nickname,
+		Username:   vo.Username,
+		Nickname:   vo.Nickname,
 		CreateTime: time.Now(),
 	}
 	item.Gender = types.UserGenderUnknown
 	item.Status = types.UserStateNormal
-	item.SetPassword(dto.Password)
-	return item
+	if err := item.SetPassword(vo.Password); err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 // ToFilterFromQueryDTO 转换为查询

@@ -19,12 +19,12 @@ type Account struct {
 // AccountConvertor 用户数据转换
 type AccountConvertor struct{}
 
-// CreateEntity op 转为 aggregate
+// CreateEntity 转化为实体
 func (c *AccountConvertor) CreateEntity(data Account) *entity.Account {
 	item := &entity.Account{
 		AdminID:    data.AdminID,
 		Email:      data.Email,
-		Password:   data.Passwd,
+		Password:   types.ParseHashPassword(data.Passwd),
 		CreateTime: time.Unix(data.CreateTime, 0),
 	}
 	item.Roles, _ = types.ParseRoles(data.Roles, true)
@@ -37,19 +37,7 @@ func (c *AccountConvertor) CreatePO(vo *entity.Account) *Account {
 		Email:      vo.Email,
 		CreateTime: vo.CreateTime.Unix(),
 		Roles:      vo.Roles.String(),
-		Passwd:     vo.Password,
+		Passwd:     vo.Password.String(),
 	}
-	return item
-}
-
-// ToEntity 转化为实体
-func (c *AccountConvertor) ToEntity(vo Account) *entity.Account {
-	item := &entity.Account{
-		AdminID:    vo.AdminID,
-		Email:      vo.Email,
-		CreateTime: time.Unix(vo.CreateTime, 0),
-		Password:   vo.Passwd,
-	}
-	item.Roles, _ = types.ParseRoles(vo.Roles, true)
 	return item
 }

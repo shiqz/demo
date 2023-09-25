@@ -67,7 +67,7 @@ func (r *AccountRepository) Accounts(ctx context.Context, filter *domain.Account
 	}
 	var result []*entity.Account
 	for _, item := range list {
-		result = append(result, new(po.AccountConvertor).ToEntity(item))
+		result = append(result, new(po.AccountConvertor).CreateEntity(item))
 	}
 	return result, nil
 }
@@ -100,7 +100,7 @@ func (r *AccountRepository) UpdateRole(ctx context.Context, account *entity.Acco
 // UpdatePass 修改密码
 func (r *AccountRepository) UpdatePass(ctx context.Context, account *entity.Account) error {
 	update := goqu.Record{
-		"passwd": account.Password,
+		"passwd": account.Password.String(),
 	}
 	return r.update(ctx, account.AdminID, update)
 }

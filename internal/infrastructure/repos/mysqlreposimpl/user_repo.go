@@ -135,8 +135,8 @@ func (r *UserRepository) Users(ctx context.Context, filter *domain.UserFilter) (
 // UpdatePass 修改用户密码
 func (r *UserRepository) UpdatePass(ctx context.Context, user *entity.User) error {
 	update := goqu.Record{
-		"passwd": user.Password,
-		"salt":   user.Salt,
+		"passwd": user.Password.String(),
+		"salt":   user.Password.GetSalt(),
 	}
 	return r.update(ctx, user.UserID, update)
 }

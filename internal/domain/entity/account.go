@@ -3,8 +3,6 @@ package entity
 import (
 	"example/internal/app/errs"
 	"example/internal/domain/types"
-	"example/internal/pkg/utils"
-	"github.com/pkg/errors"
 	"time"
 )
 
@@ -12,24 +10,24 @@ import (
 type Account struct {
 	AdminID    uint
 	Email      string
-	Password   string
+	Password   *types.Password
 	Roles      types.Roles
 	CreateTime time.Time
 }
 
 // SetPassword 设置密码
 func (u *Account) SetPassword(pass string) error {
-	enPass, err := utils.HashPassEncrypt([]byte(pass))
+	pwd, err := types.NewPassword(types.PassMethodHash, pass)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
-	u.Password = string(enPass)
+	u.Password = pwd
 	return nil
 }
 
 // ValidPassword 验证密码是否正确
 func (u *Account) ValidPassword(pass string) error {
-	if utils.HashPassCheck([]byte(u.Password), []byte(pass)) != nil {
+	if !u.Password.Valid(pass) {
 		return errs.EcInvalidUser
 	}
 	return nil

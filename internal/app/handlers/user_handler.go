@@ -34,8 +34,12 @@ func (h *UserHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ua := new(assembler.User).ToEntityFromCreateDTO(data)
-	if err := h.userService.Create(r.Context(), ua); err != nil {
+	user, err := new(assembler.User).ToEntityFromCreateDTO(data)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	if err = h.userService.Create(r.Context(), user); err != nil {
 		response.Error(w, err)
 		return
 	}
